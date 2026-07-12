@@ -59,6 +59,7 @@ button {
 .brand,
 .brand-mark,
 .icon-button,
+.top-actions,
 .panel-heading,
 .tithi-line,
 .notification-preview {
@@ -69,6 +70,33 @@ button {
 .brand {
   gap: 10px;
   font-weight: 760;
+}
+
+.top-actions {
+  gap: 10px;
+}
+
+.live-clock {
+  display: grid;
+  gap: 1px;
+  min-width: 168px;
+  padding: 7px 10px;
+  border: 1px solid rgba(244, 239, 227, 0.18);
+  border-radius: 8px;
+  text-align: right;
+  background: rgba(16, 20, 24, 0.46);
+  backdrop-filter: blur(12px);
+}
+
+.live-clock span {
+  color: #fff7df;
+  font-variant-numeric: tabular-nums;
+  font-weight: 760;
+}
+
+.live-clock small {
+  color: rgba(244, 239, 227, 0.62);
+  font-size: 0.72rem;
 }
 
 .brand-mark,
@@ -573,6 +601,20 @@ blockquote {
   .hero-grid {
     min-height: auto;
     padding: 18px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .top-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+  }
+
+  .live-clock {
+    min-width: 142px;
   }
 
   .moon-stage {

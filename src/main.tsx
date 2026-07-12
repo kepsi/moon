@@ -1,12 +1,13 @@
 import React from "react";
 import { Root, createRoot } from "react-dom/client";
 import { Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eye, Moon, Orbit, Sparkles, SunMedium } from "lucide-react";
+import { EclipticGeoMoon, MoonPhase } from "astronomy-engine";
 import { getLunarSourceDay, lunarDaySource } from "./lunarDaySource";
 import "./styles.css";
 
 type MoonDay = {
   date: Date;
-  age: number;
+  phaseAngle: number;
   phaseName: string;
   phasePercent: number;
   lunarDayNumber: number;
@@ -33,10 +34,6 @@ type ZodiacSign = {
 };
 
 const SYNODIC_MONTH = 29.530588853;
-const KNOWN_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14);
-const DAY_MS = 86_400_000;
-const TROPICAL_YEAR = 365.2422;
-
 const zodiacSigns: ZodiacSign[] = [
   {
     name: "Aries",
@@ -289,28 +286,12 @@ const dayWisdom = [
   }
 ];
 
-function daysSinceKnownNewMoon(date: Date) {
-  return (date.getTime() - KNOWN_NEW_MOON) / DAY_MS;
-}
-
-function normalizeMoonAge(date: Date) {
-  const cycles = daysSinceKnownNewMoon(date) / SYNODIC_MONTH;
-  return ((cycles - Math.floor(cycles)) * SYNODIC_MONTH + SYNODIC_MONTH) % SYNODIC_MONTH;
-}
-
 function normalizeDegrees(degrees: number) {
   return ((degrees % 360) + 360) % 360;
 }
 
-function getSunLongitude(date: Date) {
-  const springEquinox = Date.UTC(date.getUTCFullYear(), 2, 20, 9, 0);
-  const daysFromAries = (date.getTime() - springEquinox) / DAY_MS;
-  return normalizeDegrees((daysFromAries / TROPICAL_YEAR) * 360);
-}
-
-function getMoonZodiac(date: Date, moonAge: number) {
-  const elongation = (moonAge / SYNODIC_MONTH) * 360;
-  const longitude = normalizeDegrees(getSunLongitude(date) + elongation);
+function getMoonZodiac(date: Date) {
+  const longitude = normalizeDegrees(EclipticGeoMoon(date).lon);
   const signIndex = Math.floor(longitude / 30);
 
   return {
@@ -333,18 +314,19 @@ function getPhaseName(age: number) {
 }
 
 function getMoonDay(date: Date): MoonDay {
-  const age = normalizeMoonAge(date);
-  const lunarDayNumber = Math.floor((age / SYNODIC_MONTH) * 30) + 1;
+  const phaseAngle = MoonPhase(date);
+  const lunarAge = (phaseAngle / 360) * SYNODIC_MONTH;
+  const lunarDayNumber = Math.min(30, Math.floor(phaseAngle / 12) + 1);
   const tithiNumber = ((lunarDayNumber - 1) % 15) + 1;
   const paksha = lunarDayNumber <= 15 ? "Shukla" : "Krishna";
   const wisdom = dayWisdom[tithiNumber - 1];
   const source = getLunarSourceDay(lunarDayNumber);
-  const illumination = (1 - Math.cos((2 * Math.PI * age) / SYNODIC_MONTH)) / 2;
+  const illumination = (1 - Math.cos((phaseAngle * Math.PI) / 180)) / 2;
 
   return {
     date,
-    age,
-    phaseName: getPhaseName(age),
+    phaseAngle,
+    phaseName: getPhaseName(lunarAge),
     phasePercent: Math.round(illumination * 100),
     lunarDayNumber,
     tithiNumber,
@@ -367,16 +349,31 @@ function atHour(date: Date, hour: number) {
   return next;
 }
 
-function formatDate(date: Date) {
+function isSameLocalDate(first: Date, second: Date) {
+  return first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth() && first.getDate() === second.getDate();
+}
+
+function formatDate(date: Date, timeZone?: string) {
   return new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
-    month: "long"
+    month: "long",
+    timeZone
   }).format(date);
 }
 
-function moonIconStyle(percent: number, age: number) {
-  const waxing = age <= SYNODIC_MONTH / 2;
+function formatClock(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone,
+    timeZoneName: "short"
+  }).format(date);
+}
+
+function moonIconStyle(percent: number, phaseAngle: number) {
+  const waxing = phaseAngle <= 180;
   const shade = waxing
     ? `linear-gradient(90deg, rgba(16, 20, 24, 0.82) ${100 - percent}%, transparent ${100 - percent}%)`
     : `linear-gradient(90deg, transparent ${percent}%, rgba(16, 20, 24, 0.82) ${percent}%)`;
@@ -403,7 +400,7 @@ function pointerStyle(degrees: number) {
 }
 
 function LunarSymbolClock({ day }: { day: MoonDay }) {
-  const moonAngle = (day.age / SYNODIC_MONTH) * 360;
+  const moonAngle = day.phaseAngle;
   const currentSource = getLunarSourceDay(day.lunarDayNumber);
 
   return (
@@ -480,15 +477,24 @@ function ZodiacClock({ zodiac }: { zodiac: ReturnType<typeof getMoonZodiac> }) {
 
 function App() {
   const [selectedDate, setSelectedDate] = React.useState(() => new Date());
+  const [now, setNow] = React.useState(() => new Date());
+  const [timeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [notificationTime, setNotificationTime] = React.useState("07:30");
   const [notificationsOn, setNotificationsOn] = React.useState(false);
-  const today = getMoonDay(atHour(selectedDate, 12));
+
+  React.useEffect(() => {
+    const clock = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(clock);
+  }, []);
+
+  const selectedMoment = isSameLocalDate(selectedDate, now) ? now : atHour(selectedDate, 12);
+  const today = getMoonDay(selectedMoment);
   const todaySource = getLunarSourceDay(today.lunarDayNumber);
   const wakeDreamDay = getMoonDay(atHour(addDays(selectedDate, -1), 23));
   const wakeDreamSource = getLunarSourceDay(wakeDreamDay.lunarDayNumber);
   const tonightDreamDay = getMoonDay(atHour(selectedDate, 23));
   const tonightDreamSource = getLunarSourceDay(tonightDreamDay.lunarDayNumber);
-  const moonZodiac = getMoonZodiac(today.date, today.age);
+  const moonZodiac = getMoonZodiac(today.date);
   const week = Array.from({ length: 7 }, (_, index) => getMoonDay(atHour(addDays(selectedDate, index - 2), 12)));
 
   return (
@@ -501,14 +507,20 @@ function App() {
             </span>
             <span>Mondkalender</span>
           </div>
-          <button className="icon-button" aria-label="Open calendar">
-            <CalendarDays size={19} />
-          </button>
+          <div className="top-actions">
+            <div className="live-clock" aria-label={`Current browser time in ${timeZone}`}>
+              <span>{formatClock(now, timeZone)}</span>
+              <small>{timeZone}</small>
+            </div>
+            <button className="icon-button" aria-label="Open calendar">
+              <CalendarDays size={19} />
+            </button>
+          </div>
         </nav>
 
         <div className="hero-grid">
           <div className="moon-stage" aria-label={`${today.phaseName}, ${today.phasePercent}% illuminated`}>
-            <div className="moon-orb" style={moonIconStyle(today.phasePercent, today.age)} />
+            <div className="moon-orb" style={moonIconStyle(today.phasePercent, today.phaseAngle)} />
             <div className="phase-card">
               <span>{today.phaseName}</span>
               <strong>{today.phasePercent}%</strong>
@@ -520,7 +532,7 @@ function App() {
               <button className="icon-button" onClick={() => setSelectedDate(addDays(selectedDate, -1))} aria-label="Previous day">
                 <ChevronLeft size={19} />
               </button>
-              <p>{formatDate(today.date)}</p>
+              <p>{formatDate(today.date, timeZone)}</p>
               <button className="icon-button" onClick={() => setSelectedDate(addDays(selectedDate, 1))} aria-label="Next day">
                 <ChevronRight size={19} />
               </button>
@@ -632,7 +644,7 @@ function App() {
               onClick={() => setSelectedDate(day.date)}
             >
               <span>{new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(day.date)}</span>
-              <i style={moonIconStyle(day.phasePercent, day.age)} />
+              <i style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
               <strong>{day.lunarDayNumber}</strong>
             </button>
           ))}
