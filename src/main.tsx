@@ -1,6 +1,6 @@
 import React from "react";
 import { Root, createRoot } from "react-dom/client";
-import { Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eye, Moon, Orbit, Sparkles, SunMedium } from "lucide-react";
+import { Activity, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eye, Moon, Orbit, Sparkles, SunMedium } from "lucide-react";
 import { EclipticGeoMoon, MoonPhase } from "astronomy-engine";
 import { getLunarSourceDay, lunarDaySource } from "./lunarDaySource";
 import "./styles.css";
@@ -26,11 +26,14 @@ type MoonDay = {
 type ZodiacSign = {
   name: string;
   shortName: string;
+  symbol: string;
   element: string;
   mode: string;
   guidance: string;
   bestFor: string[];
   watch: string;
+  activeOrgans: string[];
+  foodNote: string;
 };
 
 const SYNODIC_MONTH = 29.530588853;
@@ -38,129 +41,153 @@ const zodiacSigns: ZodiacSign[] = [
   {
     name: "Aries",
     shortName: "Ari",
+    symbol: "♈",
     element: "Fire",
     mode: "Cardinal",
     guidance: "Moon in Aries wants honest movement. Lead with courage, start the thing, and let emotion pass through action instead of argument.",
     bestFor: ["first steps", "body heat", "decisions"],
-    watch: "Impatience, sharp replies, rushing before the body has caught up."
+    watch: "Impatience, sharp replies, rushing before the body has caught up.",
+    activeOrgans: ["Head", "Brain", "Eyes", "Face"],
+    foodNote: "Iron-rich vegetables and energizing foods. Avoid excess spice or caffeine that overheats the system."
   },
   {
     name: "Taurus",
     shortName: "Tau",
+    symbol: "♉",
     element: "Earth",
     mode: "Fixed",
     guidance: "Moon in Taurus steadies the nervous system through touch, food, nature, and slow work. Choose what is simple and real.",
     bestFor: ["rest", "money care", "sensual grounding"],
-    watch: "Stubbornness, comfort loops, mistaking safety for aliveness."
+    watch: "Stubbornness, comfort loops, mistaking safety for aliveness.",
+    activeOrgans: ["Throat", "Neck", "Thyroid", "Vocal cords", "Ears"],
+    foodNote: "Nourishing, grounding foods eaten slowly. Avoid overeating; chew thoroughly and savor the meal."
   },
   {
     name: "Gemini",
     shortName: "Gem",
+    symbol: "♊",
     element: "Air",
     mode: "Mutable",
     guidance: "Moon in Gemini opens the mind. Talk, write, ask, sort, and let curiosity loosen what has become too fixed.",
     bestFor: ["messages", "learning", "light planning"],
-    watch: "Scattered attention, overexplaining, living only in the head."
+    watch: "Scattered attention, overexplaining, living only in the head.",
+    activeOrgans: ["Shoulders", "Arms", "Hands", "Lungs", "Nervous system"],
+    foodNote: "Light, varied foods. Breathing exercises and lung-supportive herbs benefit this placement."
   },
   {
     name: "Cancer",
     shortName: "Can",
+    symbol: "♋",
     element: "Water",
     mode: "Cardinal",
     guidance: "Moon in Cancer turns attention toward home, memory, and emotional shelter. Tend the inner room before performing for the outer world.",
     bestFor: ["home care", "family repair", "soft meals"],
-    watch: "Moodiness, clinging, confusing old feelings with present facts."
+    watch: "Moodiness, clinging, confusing old feelings with present facts.",
+    activeOrgans: ["Stomach", "Breasts", "Chest", "Lymphatic system"],
+    foodNote: "Comfort foods and easy-to-digest meals. Warm soups, dairy, and gentle stews are supportive and soothing."
   },
   {
     name: "Leo",
     shortName: "Leo",
+    symbol: "♌",
     element: "Fire",
     mode: "Fixed",
     guidance: "Moon in Leo asks for warm-hearted expression. Create, celebrate, praise generously, and let visibility serve joy.",
     bestFor: ["creativity", "romance", "confidence"],
-    watch: "Pride, dramatizing a need that could be spoken plainly."
+    watch: "Pride, dramatizing a need that could be spoken plainly.",
+    activeOrgans: ["Heart", "Spine", "Upper back"],
+    foodNote: "Warming, generous foods. Heart-healthy choices: berries, leafy greens, olive oil."
   },
   {
     name: "Virgo",
     shortName: "Vir",
+    symbol: "♍",
     element: "Earth",
     mode: "Mutable",
     guidance: "Moon in Virgo restores through order and usefulness. Edit the system, care for the body, and make one thing cleaner than it was.",
     bestFor: ["routines", "health notes", "organizing"],
-    watch: "Perfectionism, worry disguised as responsibility."
+    watch: "Perfectionism, worry disguised as responsibility.",
+    activeOrgans: ["Intestines", "Digestive system", "Pancreas", "Spleen"],
+    foodNote: "Clean, easily digestible foods. Fermented foods and fiber support the intestines. Eat regular, moderate meals."
   },
   {
     name: "Libra",
     shortName: "Lib",
+    symbol: "♎",
     element: "Air",
     mode: "Cardinal",
     guidance: "Moon in Libra seeks proportion, beauty, and right relationship. Choose the graceful repair, not the pleasing performance.",
     bestFor: ["conversation", "design", "agreements"],
-    watch: "Avoiding truth to keep the surface smooth."
+    watch: "Avoiding truth to keep the surface smooth.",
+    activeOrgans: ["Kidneys", "Lower back", "Adrenal glands", "Skin"],
+    foodNote: "Alkaline, balanced diet. Cucumber, watermelon, and lemon water support the kidneys."
   },
   {
     name: "Scorpio",
     shortName: "Sco",
+    symbol: "♏",
     element: "Water",
     mode: "Fixed",
     guidance: "Moon in Scorpio deepens the emotional field. Keep confidence, investigate gently, and let honesty transform what secrecy has hardened.",
     bestFor: ["shadow work", "intimacy", "release"],
-    watch: "Suspicion, control, testing people instead of trusting signals."
+    watch: "Suspicion, control, testing people instead of trusting signals.",
+    activeOrgans: ["Reproductive organs", "Colon", "Bladder", "Pelvis"],
+    foodNote: "Cleansing, regenerating foods. Avoid extremes; deep, purposeful nourishment is favored."
   },
   {
     name: "Sagittarius",
     shortName: "Sag",
+    symbol: "♐",
     element: "Fire",
     mode: "Mutable",
     guidance: "Moon in Sagittarius needs meaning and horizon. Study, move, pray, tell the truth kindly, and let perspective return.",
     bestFor: ["travel plans", "teaching", "faith"],
-    watch: "Restlessness, bluntness, skipping details that matter."
+    watch: "Restlessness, bluntness, skipping details that matter.",
+    activeOrgans: ["Hips", "Thighs", "Liver", "Sciatic nerve"],
+    foodNote: "Generous, liver-supportive foods. Bitter greens, beets, and artichoke are especially beneficial."
   },
   {
     name: "Capricorn",
     shortName: "Cap",
+    symbol: "♑",
     element: "Earth",
     mode: "Cardinal",
     guidance: "Moon in Capricorn favors discipline and devotion. Make the promise practical, respect limits, and build what can hold weight.",
     bestFor: ["priorities", "career", "long-term plans"],
-    watch: "Coldness, self-pressure, measuring worth only by output."
+    watch: "Coldness, self-pressure, measuring worth only by output.",
+    activeOrgans: ["Knees", "Bones", "Joints", "Teeth", "Nails"],
+    foodNote: "Mineral-rich foods: bone broth, leafy greens, dairy. Support structural health and the skeletal system."
   },
   {
     name: "Aquarius",
     shortName: "Aqu",
+    symbol: "♒",
     element: "Air",
     mode: "Fixed",
     guidance: "Moon in Aquarius brings distance and pattern recognition. Think systemically, refresh friendships, and give your feelings some sky.",
     bestFor: ["community", "ideas", "technology"],
-    watch: "Detachment, contrarian reflexes, explaining feelings away."
+    watch: "Detachment, contrarian reflexes, explaining feelings away.",
+    activeOrgans: ["Shins", "Ankles", "Circulatory system"],
+    foodNote: "Light, hydrating foods. Good circulation is supported by moderate movement and steady fluid intake."
   },
   {
     name: "Pisces",
     shortName: "Pis",
+    symbol: "♓",
     element: "Water",
     mode: "Mutable",
     guidance: "Moon in Pisces thins the veil. Dream, make art, meditate, forgive gently, and protect your sensitivity with clear edges.",
     bestFor: ["dreamwork", "music", "compassion"],
-    watch: "Blurred boundaries, escapism, absorbing emotions that are not yours."
+    watch: "Blurred boundaries, escapism, absorbing emotions that are not yours.",
+    activeOrgans: ["Feet", "Lymphatic system", "Immune system"],
+    foodNote: "Gentle, nourishing foods. Fish and easily digestible proteins are supportive. Avoid anything intoxicating."
   }
 ];
 
 const tithiNames = [
-  "Pratipada",
-  "Dvitiya",
-  "Tritiya",
-  "Chaturthi",
-  "Panchami",
-  "Shashthi",
-  "Saptami",
-  "Ashtami",
-  "Navami",
-  "Dashami",
-  "Ekadashi",
-  "Dvadashi",
-  "Trayodashi",
-  "Chaturdashi",
-  "Purnima / Amavasya"
+  "Pratipada", "Dvitiya", "Tritiya", "Chaturthi", "Panchami",
+  "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
+  "Ekadashi", "Dvadashi", "Trayodashi", "Chaturdashi", "Purnima / Amavasya"
 ];
 
 const dayWisdom = [
@@ -239,7 +266,7 @@ const dayWisdom = [
   {
     archetype: "The clean ascent",
     headline: "Make the next right thing elegant.",
-    guidance: "Structure helps the magic land. Organize, decide, refine, and let your future self benefit from today’s clarity.",
+    guidance: "Structure helps the magic land. Organize, decide, refine, and let your future self benefit from today's clarity.",
     focus: ["order", "decisions", "craft"],
     ritual: "Clean one surface or close one loop before starting something new.",
     affirmation: "Clarity is a form of tenderness toward my future."
@@ -350,7 +377,11 @@ function atHour(date: Date, hour: number) {
 }
 
 function isSameLocalDate(first: Date, second: Date) {
-  return first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth() && first.getDate() === second.getDate();
+  return (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+  );
 }
 
 function formatDate(date: Date, timeZone?: string) {
@@ -399,7 +430,39 @@ function pointerStyle(degrees: number) {
   };
 }
 
-function LunarSymbolClock({ day }: { day: MoonDay }) {
+// Combined moon orb + zodiac wheel for the hero section
+function MoonZodiacHero({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typeof getMoonZodiac> }) {
+  return (
+    <div
+      className="moon-zodiac-hero"
+      aria-label={`${day.phaseName}, ${day.phasePercent}% illuminated, Moon in ${zodiac.sign.name}`}
+    >
+      {zodiacSigns.map((sign, index) => (
+        <span
+          key={sign.name}
+          className={`zodiac-hero-label${index === zodiac.signIndex ? " active" : ""}`}
+          style={wheelLabelStyle(index, 12, 46)}
+          title={`${sign.name} — ${sign.element} ${sign.mode}`}
+        >
+          {sign.symbol}
+        </span>
+      ))}
+
+      <div className="hero-degree-pointer" style={pointerStyle(zodiac.longitude)} />
+
+      <div className="hero-moon-center" style={moonIconStyle(day.phasePercent, day.phaseAngle)}>
+        <div className="hero-moon-badge">
+          <span>{day.phaseName}</span>
+          <strong>{day.phasePercent}%</strong>
+          <small>{zodiac.sign.symbol} {zodiac.sign.name}</small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Lunar day clock — symbols instead of numbers
+function LunarDayClock({ day }: { day: MoonDay }) {
   const moonAngle = day.phaseAngle;
   const currentSource = getLunarSourceDay(day.lunarDayNumber);
 
@@ -407,68 +470,117 @@ function LunarSymbolClock({ day }: { day: MoonDay }) {
     <article className="panel clock-panel">
       <div className="panel-heading">
         <Orbit size={19} />
-        <h2>Lunar Month Clock</h2>
+        <h2>Lunar Month · Day {day.lunarDayNumber}</h2>
       </div>
       <div className="clock-face lunar-clock" aria-label={`Lunar month pointer on day ${day.lunarDayNumber}`}>
         {lunarDaySource.map((source) => (
           <span
-            className={`clock-label ${source.lunarDay === day.lunarDayNumber ? "active" : ""}`}
+            className={`clock-label emoji-label${source.lunarDay === day.lunarDayNumber ? " active" : ""}`}
             key={source.lunarDay}
             style={wheelLabelStyle(source.lunarDay - 1, lunarDaySource.length)}
-            title={source.symbol}
+            title={`Day ${source.lunarDay}: ${source.symbol}`}
           >
-            {source.lunarDay}
+            {source.emoji}
           </span>
         ))}
         <div className="clock-pointer moon-pointer" style={pointerStyle(moonAngle)} />
         <div className="clock-center">
-          <span>{day.phaseName}</span>
-          <strong>{currentSource.symbol}</strong>
-          <small>day {day.lunarDayNumber}</small>
+          <span>{day.paksha}</span>
+          <strong>{currentSource.emoji}</strong>
+          <small>{currentSource.symbol}</small>
         </div>
       </div>
     </article>
   );
 }
 
-function ZodiacClock({ zodiac }: { zodiac: ReturnType<typeof getMoonZodiac> }) {
+// Zodiac guidance text panel (the clock visual has moved into the hero)
+function ZodiacGuidancePanel({ zodiac }: { zodiac: ReturnType<typeof getMoonZodiac> }) {
   return (
-    <article className="panel clock-panel zodiac-guidance-panel">
+    <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <Sparkles size={19} />
-        <h2>Moon Zodiac Clock</h2>
+        <h2>Moon in {zodiac.sign.name}</h2>
       </div>
-      <div className="clock-with-copy">
-        <div className="clock-face zodiac-clock" aria-label={`Moon in ${zodiac.sign.name}`}>
-          {zodiacSigns.map((sign, index) => (
-            <span
-              className={`clock-label zodiac-label ${index === zodiac.signIndex ? "active" : ""}`}
-              key={sign.name}
-              style={wheelLabelStyle(index, zodiacSigns.length, 42)}
-              title={sign.name}
-            >
-              {sign.shortName}
-            </span>
-          ))}
-          <div className="clock-pointer zodiac-pointer" style={pointerStyle(zodiac.longitude)} />
-          <div className="clock-center">
-            <span>Moon in</span>
-            <strong>{zodiac.sign.name}</strong>
-            <small>approx. {zodiac.degreeInSign} degrees</small>
-          </div>
-        </div>
-        <div className="zodiac-copy">
+
+      <div className="zodiac-guide-header">
+        <span className="zodiac-symbol-large">{zodiac.sign.symbol}</span>
+        <div>
           <div className="zodiac-meta">
             <span>{zodiac.sign.element}</span>
             <span>{zodiac.sign.mode}</span>
           </div>
-          <p>{zodiac.sign.guidance}</p>
-          <div className="focus-list compact">
-            {zodiac.sign.bestFor.map((item) => (
-              <span key={item}>{item}</span>
+          <p className="zodiac-degree-note">{zodiac.degreeInSign}° in {zodiac.sign.name}</p>
+        </div>
+      </div>
+
+      <p>{zodiac.sign.guidance}</p>
+
+      <div className="focus-list compact">
+        {zodiac.sign.bestFor.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+
+      <p className="watch-note">{zodiac.sign.watch}</p>
+
+      <div className="organ-row">
+        <small>Active body areas</small>
+        <div className="organ-chips">
+          {zodiac.sign.activeOrgans.map((organ) => (
+            <span key={organ} className="organ-chip teal">{organ}</span>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// Body wisdom — active organs from both sources, do/avoid chips, food guidance
+function BodyWisdomPanel({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typeof getMoonZodiac> }) {
+  const daySource = getLunarSourceDay(day.lunarDayNumber);
+  const combinedOrgans = [...new Set([...daySource.activeOrgans, ...zodiac.sign.activeOrgans])];
+
+  return (
+    <article className="panel body-wisdom-panel">
+      <div className="panel-heading">
+        <Activity size={19} />
+        <h2>Body & Nourishment</h2>
+      </div>
+
+      <div className="wisdom-grid">
+        <div className="wisdom-section">
+          <h3>Active today</h3>
+          <div className="organ-chips">
+            {combinedOrgans.map((organ) => (
+              <span key={organ} className="organ-chip teal">{organ}</span>
             ))}
           </div>
-          <p className="watch-note">{zodiac.sign.watch}</p>
+        </div>
+
+        <div className="wisdom-section">
+          <h3>Favor</h3>
+          <div className="organ-chips">
+            {daySource.doToday.map((item) => (
+              <span key={item} className="organ-chip green">{item}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="wisdom-section">
+          <h3>Avoid</h3>
+          <div className="organ-chips">
+            {daySource.avoidToday.map((item) => (
+              <span key={item} className="organ-chip amber">{item}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="wisdom-section food-section">
+          <h3>Food — lunar day {day.lunarDayNumber}</h3>
+          <p>{daySource.foodNote}</p>
+          <h3>Food — {zodiac.sign.symbol} {zodiac.sign.name}</h3>
+          <p>{zodiac.sign.foodNote}</p>
         </div>
       </div>
     </article>
@@ -519,30 +631,33 @@ function App() {
         </nav>
 
         <div className="hero-grid">
-          <div className="moon-stage" aria-label={`${today.phaseName}, ${today.phasePercent}% illuminated`}>
-            <div className="moon-orb" style={moonIconStyle(today.phasePercent, today.phaseAngle)} />
-            <div className="phase-card">
-              <span>{today.phaseName}</span>
-              <strong>{today.phasePercent}%</strong>
-            </div>
-          </div>
+          <MoonZodiacHero day={today} zodiac={moonZodiac} />
 
           <article className="daily-reading">
             <div className="date-row">
-              <button className="icon-button" onClick={() => setSelectedDate(addDays(selectedDate, -1))} aria-label="Previous day">
+              <button
+                className="icon-button"
+                onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+                aria-label="Previous day"
+              >
                 <ChevronLeft size={19} />
               </button>
               <p>{formatDate(today.date, timeZone)}</p>
-              <button className="icon-button" onClick={() => setSelectedDate(addDays(selectedDate, 1))} aria-label="Next day">
+              <button
+                className="icon-button"
+                onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+                aria-label="Next day"
+              >
                 <ChevronRight size={19} />
               </button>
             </div>
 
             <div className="tithi-line">
-              <Sparkles size={16} />
-              <span>
-                Lunar day {today.lunarDayNumber} · {today.paksha} Paksha · Symbol: {today.symbol}
-              </span>
+              <span className="tithi-zodiac">{moonZodiac.sign.symbol} {moonZodiac.sign.name}</span>
+              <span className="tithi-sep">·</span>
+              <span>{todaySource.emoji} Day {today.lunarDayNumber}</span>
+              <span className="tithi-sep">·</span>
+              <span>{today.paksha}</span>
             </div>
 
             <h1>{today.headline}</h1>
@@ -558,30 +673,10 @@ function App() {
       </section>
 
       <section className="content-grid">
-        <section className="clock-dashboard" aria-label="Lunar and zodiac clocks">
-          <LunarSymbolClock day={today} />
-          <ZodiacClock zodiac={moonZodiac} />
-        </section>
+        <LunarDayClock day={today} />
+        <ZodiacGuidancePanel zodiac={moonZodiac} />
 
-        <article className="panel symbol-panel">
-          <div className="panel-heading">
-            <BookOpen size={19} />
-            <h2>Symbol of the Day</h2>
-          </div>
-          <div className="symbol-lockup">
-            <span>{today.lunarDayNumber}</span>
-            <div>
-              <strong>{today.symbol}</strong>
-              <p>
-                OM Journal links this symbol with lunar day {today.lunarDayNumber}. In this app it anchors the daily
-                reflection and the dream reading.
-              </p>
-            </div>
-          </div>
-          <a href={todaySource.sourceUrl} target="_blank" rel="noreferrer">
-            Source: OM Journal lunar day {today.lunarDayNumber}
-          </a>
-        </article>
+        <BodyWisdomPanel day={today} zodiac={moonZodiac} />
 
         <article className="panel dream-panel">
           <div className="panel-heading">
@@ -591,7 +686,7 @@ function App() {
           <div className="dream-context">
             <span>Dream you woke with</span>
             <strong>
-              Lunar day {wakeDreamDay.lunarDayNumber} · {wakeDreamSource.symbol}
+              {wakeDreamSource.emoji} Day {wakeDreamDay.lunarDayNumber} · {wakeDreamSource.symbol}
             </strong>
           </div>
           <h3>{wakeDreamSource.dreamFocus}</h3>
@@ -599,7 +694,7 @@ function App() {
           <div className="tonight-note">
             <span>Tonight</span>
             <strong>
-              Lunar day {tonightDreamDay.lunarDayNumber} · {tonightDreamSource.dreamFocus}
+              {tonightDreamSource.emoji} Day {tonightDreamDay.lunarDayNumber} · {tonightDreamSource.dreamFocus}
             </strong>
           </div>
         </article>
@@ -607,10 +702,27 @@ function App() {
         <article className="panel ritual-panel">
           <div className="panel-heading">
             <SunMedium size={19} />
-            <h2>Today’s Practice</h2>
+            <h2>Today's Practice</h2>
           </div>
           <p>{today.ritual}</p>
           <blockquote>{today.affirmation}</blockquote>
+        </article>
+
+        <article className="panel symbol-panel">
+          <div className="panel-heading">
+            <BookOpen size={19} />
+            <h2>Symbol · {today.symbol}</h2>
+          </div>
+          <div className="symbol-lockup">
+            <span aria-hidden="true">{todaySource.emoji}</span>
+            <div>
+              <strong>{today.symbol}</strong>
+              <p>Lunar day {today.lunarDayNumber} symbol from the OM Journal tradition. Anchors the daily reflection and the dream reading.</p>
+            </div>
+          </div>
+          <a href={todaySource.sourceUrl} target="_blank" rel="noreferrer">
+            Source: OM Journal lunar day {today.lunarDayNumber} →
+          </a>
         </article>
 
         <article className="panel notification-panel">
@@ -620,11 +732,19 @@ function App() {
           </div>
           <label className="switch-row">
             <span>Morning lunar note</span>
-            <input type="checkbox" checked={notificationsOn} onChange={(event) => setNotificationsOn(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={notificationsOn}
+              onChange={(event) => setNotificationsOn(event.target.checked)}
+            />
           </label>
           <label className="time-row">
             <span>Delivery time</span>
-            <input type="time" value={notificationTime} onChange={(event) => setNotificationTime(event.target.value)} />
+            <input
+              type="time"
+              value={notificationTime}
+              onChange={(event) => setNotificationTime(event.target.value)}
+            />
           </label>
           <div className="notification-preview">
             <Check size={16} />
@@ -639,13 +759,14 @@ function App() {
         <section className="week-strip" aria-label="Seven day moon outlook">
           {week.map((day) => (
             <button
-              className={`day-chip ${day.date.toDateString() === selectedDate.toDateString() ? "active" : ""}`}
+              className={`day-chip${day.date.toDateString() === selectedDate.toDateString() ? " active" : ""}`}
               key={day.date.toISOString()}
               onClick={() => setSelectedDate(day.date)}
             >
               <span>{new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(day.date)}</span>
               <i style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
-              <strong>{day.lunarDayNumber}</strong>
+              <strong>{getLunarSourceDay(day.lunarDayNumber).emoji}</strong>
+              <small>{day.lunarDayNumber}</small>
             </button>
           ))}
         </section>
