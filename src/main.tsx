@@ -587,17 +587,84 @@ function BodyWisdomPanel({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typ
   );
 }
 
+const NOTIFICATION_TIME_KEY = "mondkalender.notificationTime";
+const NOTIFICATION_ON_KEY = "mondkalender.notificationsOn";
+
 function App() {
   const [selectedDate, setSelectedDate] = React.useState(() => new Date());
   const [now, setNow] = React.useState(() => new Date());
   const [timeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [notificationTime, setNotificationTime] = React.useState("07:30");
-  const [notificationsOn, setNotificationsOn] = React.useState(false);
+  const [notificationTime, setNotificationTime] = React.useState(
+    () => window.localStorage.getItem(NOTIFICATION_TIME_KEY) ?? "07:30"
+  );
+  const [notificationsOn, setNotificationsOn] = React.useState(
+    () => window.localStorage.getItem(NOTIFICATION_ON_KEY) === "true"
+  );
+  const [notificationStatus, setNotificationStatus] = React.useState<"idle" | "denied" | "unsupported">("idle");
 
   React.useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(clock);
   }, []);
+
+  React.useEffect(() => {
+    window.localStorage.setItem(NOTIFICATION_TIME_KEY, notificationTime);
+    window.localStorage.setItem(NOTIFICATION_ON_KEY, String(notificationsOn));
+  }, [notificationTime, notificationsOn]);
+
+  const handleToggleNotifications = async (checked: boolean) => {
+    if (!checked) {
+      setNotificationsOn(false);
+      return;
+    }
+
+    if (!("Notification" in window)) {
+      setNotificationStatus("unsupported");
+      setNotificationsOn(false);
+      return;
+    }
+
+    const permission =
+      Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
+
+    if (permission !== "granted") {
+      setNotificationStatus("denied");
+      setNotificationsOn(false);
+      return;
+    }
+
+    setNotificationStatus("idle");
+    setNotificationsOn(true);
+  };
+
+  React.useEffect(() => {
+    if (!notificationsOn || !("Notification" in window) || Notification.permission !== "granted") {
+      return;
+    }
+
+    let timeoutId: number;
+
+    const scheduleNext = () => {
+      const [hours, minutes] = notificationTime.split(":").map(Number);
+      const target = new Date();
+      target.setHours(hours, minutes, 0, 0);
+      if (target.getTime() <= Date.now()) {
+        target.setDate(target.getDate() + 1);
+      }
+
+      timeoutId = window.setTimeout(() => {
+        const moonDay = getMoonDay(atHour(new Date(), 12));
+        new Notification("Mondkalender", {
+          body: moonDay.headline,
+          tag: "mondkalender-daily"
+        });
+        scheduleNext();
+      }, target.getTime() - Date.now());
+    };
+
+    scheduleNext();
+    return () => window.clearTimeout(timeoutId);
+  }, [notificationsOn, notificationTime]);
 
   const selectedMoment = isSameLocalDate(selectedDate, now) ? now : atHour(selectedDate, 12);
   const today = getMoonDay(selectedMoment);
@@ -735,7 +802,7 @@ function App() {
             <input
               type="checkbox"
               checked={notificationsOn}
-              onChange={(event) => setNotificationsOn(event.target.checked)}
+              onChange={(event) => handleToggleNotifications(event.target.checked)}
             />
           </label>
           <label className="time-row">
@@ -749,7 +816,11 @@ function App() {
           <div className="notification-preview">
             <Check size={16} />
             <span>
-              {notificationsOn
+              {notificationStatus === "denied"
+                ? "Notifications are blocked in your browser settings. Allow them, then try again."
+                : notificationStatus === "unsupported"
+                ? "This browser does not support notifications."
+                : notificationsOn
                 ? `${notificationTime} · ${today.headline}`
                 : "Turn on notifications when you are ready for a daily lunar prompt."}
             </span>
