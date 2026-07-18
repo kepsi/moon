@@ -748,20 +748,6 @@ h1 {
   line-height: 1.62;
 }
 
-.focus-list.compact span {
-  font-size: 0.8rem;
-  padding: 5px 10px;
-}
-
-.watch-note {
-  margin: 0;
-  padding-left: 12px;
-  border-left: 2px solid rgba(216, 168, 94, 0.6);
-  color: rgba(244, 239, 227, 0.72);
-  font-size: 0.88rem;
-  line-height: 1.5;
-}
-
 .organ-row {
   display: grid;
   gap: 8px;
@@ -800,10 +786,59 @@ h1 {
   background: rgba(100, 180, 100, 0.1);
 }
 
-.organ-chip.amber {
-  border: 1px solid rgba(216, 168, 94, 0.32);
-  color: #e7d59b;
-  background: rgba(216, 168, 94, 0.1);
+.organ-chip.red {
+  border: 1px solid rgba(224, 122, 122, 0.36);
+  color: #f2bcbc;
+  background: rgba(224, 122, 122, 0.13);
+}
+
+/* Source-tagged chips: gold = derived from Tithi, silver = derived from the Vronsky/Symbol
+   day, blue = derived from the Moon's zodiac sign — matching the hero dial's own tithi
+   (amber) and zodiac (pale cyan) ring colors, plus a new silver tone for the symbol ring. */
+.organ-chip.gold {
+  border: 1px solid rgba(216, 168, 94, 0.4);
+  color: #f0d9a8;
+  background: rgba(216, 168, 94, 0.16);
+}
+
+.organ-chip.silver {
+  border: 1px solid rgba(201, 206, 214, 0.38);
+  color: #e2e5ea;
+  background: rgba(201, 206, 214, 0.14);
+}
+
+.organ-chip.blue {
+  border: 1px solid rgba(197, 238, 232, 0.35);
+  color: #c5eee8;
+  background: rgba(197, 238, 232, 0.13);
+}
+
+.source-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.source-label::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.source-label.gold::before {
+  background: #d8a85e;
+  box-shadow: 0 0 6px rgba(216, 168, 94, 0.8);
+}
+
+.source-label.silver::before {
+  background: #c9ced6;
+  box-shadow: 0 0 6px rgba(201, 206, 214, 0.8);
+}
+
+.source-label.blue::before {
+  background: #c5eee8;
+  box-shadow: 0 0 6px rgba(197, 238, 232, 0.8);
 }
 
 /* ── Body wisdom panel ──────────────────────────────── */
@@ -827,6 +862,10 @@ h1 {
   color: rgba(244, 239, 227, 0.46);
 }
 
+.food-section {
+  grid-column: 1 / -1;
+}
+
 .food-section p {
   margin: 0 0 14px;
   color: rgba(244, 239, 227, 0.78);
@@ -836,6 +875,16 @@ h1 {
 
 .food-section p:last-child {
   margin-bottom: 0;
+}
+
+.wisdom-section p {
+  color: rgba(244, 239, 227, 0.78);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.wisdom-section p + p {
+  margin-top: 10px;
 }
 
 .zodiac-guide-panel a {
@@ -849,10 +898,22 @@ h1 {
   text-decoration: underline;
 }
 
-.symbol-extra-grid {
+.dual-source-grid {
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 4px;
+}
+
+.wisdom-section h3.gold {
+  color: #e7c88a;
+}
+
+.wisdom-section h3.silver {
+  color: #d6dae0;
+}
+
+.wisdom-section h3.blue {
+  color: #a9dcd4;
 }
 
 /* ── Dream panel ────────────────────────────────────── */

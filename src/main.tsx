@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   Bell,
   BookOpen,
+  Briefcase,
   CalendarDays,
   Check,
   ChevronLeft,
@@ -13,6 +14,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Eye,
+  Heart,
   MapPin,
   Moon,
   Orbit,
@@ -68,9 +70,15 @@ type ZodiacSign = {
   mode: string;
   guidance: string;
   bestFor: string[];
-  watch: string;
+  avoid: string[];
+  relationships: string;
+  business: string;
+  housework: string;
+  gardening: string;
   activeOrgans: string[];
   foodNote: string;
+  foodFavor: string[];
+  foodAvoid: string[];
 };
 
 const SYNODIC_MONTH = 29.530588853;
@@ -81,11 +89,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♈",
     element: "Fire",
     mode: "Cardinal",
-    guidance: "Moon in Aries wants honest movement. Lead with courage, start the thing, and let emotion pass through action instead of argument.",
+    guidance: "Moon in Aries runs hot and vital — move the body, hydrate well, and let restlessness burn off through exercise rather than short tempers. Ease up on coffee, sugar, and chocolate.",
     bestFor: ["first steps", "body heat", "decisions"],
-    watch: "Impatience, sharp replies, rushing before the body has caught up.",
+    avoid: ["impatience", "sharp words", "rushing"],
+    relationships: "Attraction runs fast and magnetic, better suited to short, torrid romance than careful commitment. Family matters take a back seat to private interest.",
+    business: "Good for bold moves and originality, not for contracts or long-range planning. Watch impulsiveness — sign nothing you haven't slept on.",
+    housework: "Sharpen knives and scissors, fix small mechanical things, and polish glass and windows. Leave the dishes and fine china for a gentler day.",
+    gardening: "A fruit day with rising energy. Plant edible crops, harvest grain, and graft the orchard while the moon waxes; prune and manage pests as it wanes.",
     activeOrgans: ["Head", "Brain", "Eyes", "Face"],
-    foodNote: "Iron-rich vegetables and energizing foods. Avoid excess spice or caffeine that overheats the system."
+    foodNote: "Iron-rich vegetables and energizing foods. Avoid excess spice or caffeine that overheats the system.",
+    foodFavor: ["Iron-rich vegetables", "Energizing foods"],
+    foodAvoid: ["Excess spice", "Caffeine"]
   },
   {
     name: "Taurus",
@@ -93,11 +107,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♉",
     element: "Earth",
     mode: "Fixed",
-    guidance: "Moon in Taurus steadies the nervous system through touch, food, nature, and slow work. Choose what is simple and real.",
-    bestFor: ["rest", "money care", "sensual grounding"],
-    watch: "Stubbornness, comfort loops, mistaking safety for aliveness.",
+    guidance: "Moon in Taurus favors new projects and steadying your finances — a fortunate day for furniture or property. Wrap up the throat and ears if the weather turns cold.",
+    bestFor: ["comfort", "money care", "sensual grounding"],
+    avoid: ["stubbornness", "comfort loops", "inflexibility"],
+    relationships: "Taurus moons favor love — warm, sensory, unhurried. A good stretch for outings, small feasts, and letting affection show through touch.",
+    business: "Favorable for serious, steady work: finances, job applications, property and real estate. Build on what already has weight behind it.",
+    housework: "Strong for heavy, physical chores, the kind that reward muscle and patience. Monotonous labor gets finished well now.",
+    gardening: "One of the most fertile signs for planting. Set roots, trees, and bushes, and relocate anything that needs new ground.",
     activeOrgans: ["Throat", "Neck", "Thyroid", "Vocal cords", "Ears"],
-    foodNote: "Nourishing, grounding foods eaten slowly. Avoid overeating; chew thoroughly and savor the meal."
+    foodNote: "Nourishing, grounding foods eaten slowly. Avoid overeating; chew thoroughly and savor the meal.",
+    foodFavor: ["Nourishing, grounding foods", "Eating slowly"],
+    foodAvoid: ["Overeating"]
   },
   {
     name: "Gemini",
@@ -105,11 +125,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♊",
     element: "Air",
     mode: "Mutable",
-    guidance: "Moon in Gemini opens the mind. Talk, write, ask, sort, and let curiosity loosen what has become too fixed.",
+    guidance: "Moon in Gemini opens the day to conversation — good for meeting people, trading ideas, calls, and messages. Stretch out the shoulders and upper back.",
     bestFor: ["messages", "learning", "light planning"],
-    watch: "Scattered attention, overexplaining, living only in the head.",
+    avoid: ["scattered focus", "restlessness", "living in the head"],
+    relationships: "Ties formed now stay light and noncommittal, better for meeting people than locking things down. Let curiosity replace pressure.",
+    business: "Best for networking, pitching ideas, and swapping information. Push existing projects forward rather than launching new ones.",
+    housework: "A good stretch for air quality — install fans or a purifier, freshen rooms, chase out stale air.",
+    gardening: "As the moon wanes, seed, plant, and transplant flowers and vining plants. Also a fitting window for pest control and soil treatment.",
     activeOrgans: ["Shoulders", "Arms", "Hands", "Lungs", "Nervous system"],
-    foodNote: "Light, varied foods. Breathing exercises and lung-supportive herbs benefit this placement."
+    foodNote: "Light, varied foods. Breathing exercises and lung-supportive herbs benefit this placement.",
+    foodFavor: ["Light, varied foods", "Lung-supportive herbs"],
+    foodAvoid: ["Heavy foods"]
   },
   {
     name: "Cancer",
@@ -117,11 +143,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♋",
     element: "Water",
     mode: "Cardinal",
-    guidance: "Moon in Cancer turns attention toward home, memory, and emotional shelter. Tend the inner room before performing for the outer world.",
-    bestFor: ["home care", "family repair", "soft meals"],
-    watch: "Moodiness, clinging, confusing old feelings with present facts.",
+    guidance: "Moon in Cancer runs emotionally tender — meet feelings with diplomacy and get proper rest. Favor light foods, and it's a good day for cosmetic or dental care.",
+    bestFor: ["home care", "family repair", "memories"],
+    avoid: ["moodiness", "clinging", "dwelling on the past"],
+    relationships: "Tenderness rises — people turn sentimental, dreamy, easily moved. Warmth deepens contact, especially with those closest to you.",
+    business: "Moods run sensitive and easily bruised, so lead with diplomacy rather than pressure. Read the room before you push for outcomes.",
+    housework: "Good for the wet work of a home — vacuuming, mopping, refreshing the bathroom. General cleaning goes smoothly.",
+    gardening: "Among the most fertile signs. Set moisture-loving, leafy, decorative plants, and prune or graft the orchard now.",
     activeOrgans: ["Stomach", "Breasts", "Chest", "Lymphatic system"],
-    foodNote: "Comfort foods and easy-to-digest meals. Warm soups, dairy, and gentle stews are supportive and soothing."
+    foodNote: "Comfort foods and easy-to-digest meals. Warm soups, dairy, and gentle stews are supportive and soothing.",
+    foodFavor: ["Comfort foods", "Easy-to-digest meals", "Warm soups and stews"],
+    foodAvoid: ["Hard-to-digest foods"]
   },
   {
     name: "Leo",
@@ -129,11 +161,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♌",
     element: "Fire",
     mode: "Fixed",
-    guidance: "Moon in Leo asks for warm-hearted expression. Create, celebrate, praise generously, and let visibility serve joy.",
+    guidance: "Moon in Leo lifts creative enthusiasm — stay active and decisive, and get proper rest to protect the heart. A good day for a haircut or a festive occasion.",
     bestFor: ["creativity", "romance", "confidence"],
-    watch: "Pride, dramatizing a need that could be spoken plainly.",
+    avoid: ["pride", "drama", "seeking validation"],
+    relationships: "The most romantic stretch of the month — love at first sight is entirely plausible. Let warmth and a little drama have their moment.",
+    business: "Creative inspiration runs high, along with optimism, eloquence, and self-belief. Good for anything that asks you to shine.",
+    housework: "Bring your own art and personality into the home. Let something unmistakably yours show up in the space.",
+    gardening: "One of the least fertile signs. Cut back dry branches; while the moon waxes, seed into damp soil or lay a new lawn.",
     activeOrgans: ["Heart", "Spine", "Upper back"],
-    foodNote: "Warming, generous foods. Heart-healthy choices: berries, leafy greens, olive oil."
+    foodNote: "Warming, generous foods. Heart-healthy choices: berries, leafy greens, olive oil.",
+    foodFavor: ["Warming, generous foods", "Berries, leafy greens, olive oil"],
+    foodAvoid: ["Heart-taxing fatty foods"]
   },
   {
     name: "Virgo",
@@ -141,11 +179,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♍",
     element: "Earth",
     mode: "Mutable",
-    guidance: "Moon in Virgo restores through order and usefulness. Edit the system, care for the body, and make one thing cleaner than it was.",
+    guidance: "Moon in Virgo favors business and intellectual work — a good day to start important projects. Eat well, and it's a fine day for haircuts, manicures, and hand care.",
     bestFor: ["routines", "health notes", "organizing"],
-    watch: "Perfectionism, worry disguised as responsibility.",
+    avoid: ["perfectionism", "overthinking", "self-criticism"],
+    relationships: "Connections formed now lean practical over passionate, built on understanding and responsibility rather than sweep-you-off-your-feet romance.",
+    business: "A strong opening for new projects; efficiency, punctuality, and rational thinking come easily. Accounting and detailed financial work go especially well.",
+    housework: "Good for kitchen deep-cleans, the fridge especially, and fixing appliances. Skip airing large loads of laundry.",
+    gardening: "A root day with descending energy, the best sign for setting and transplanting. Enrich soil and manage pests, but don't count on stored harvests lasting.",
     activeOrgans: ["Intestines", "Digestive system", "Pancreas", "Spleen"],
-    foodNote: "Clean, easily digestible foods. Fermented foods and fiber support the intestines. Eat regular, moderate meals."
+    foodNote: "Clean, easily digestible foods. Fermented foods and fiber support the intestines. Eat regular, moderate meals.",
+    foodFavor: ["Clean, easily digestible foods", "Fermented foods and fiber", "Regular, moderate meals"],
+    foodAvoid: ["Irregular, heavy meals"]
   },
   {
     name: "Libra",
@@ -153,11 +197,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♎",
     element: "Air",
     mode: "Cardinal",
-    guidance: "Moon in Libra seeks proportion, beauty, and right relationship. Choose the graceful repair, not the pleasing performance.",
+    guidance: "Moon in Libra favors conversation, negotiation, and setting up meetings. Keep the kidneys and bladder warm, and it's a good day for facials, haircuts, eye care, or the dentist.",
     bestFor: ["conversation", "design", "agreements"],
-    watch: "Avoiding truth to keep the surface smooth.",
+    avoid: ["people-pleasing", "avoiding conflict", "indecision"],
+    relationships: "Harmony and open-hearted talk come easily, and partnerships find their balance. Don't let politeness replace real investment, or things turn formal instead of close.",
+    business: "Good for negotiation and diplomatic meetings, not for major decisions. Better to finish what's underway than start something new.",
+    housework: "Lean into beauty and balance — windows (especially on a waning moon), decorative touches, organizing books and magazines. Laundry dries quickly.",
+    gardening: "A flower day with descending energy. Transplant, set flowering herbs, and harvest — seeds saved now tend to be high quality.",
     activeOrgans: ["Kidneys", "Lower back", "Adrenal glands", "Skin"],
-    foodNote: "Alkaline, balanced diet. Cucumber, watermelon, and lemon water support the kidneys."
+    foodNote: "Alkaline, balanced diet. Cucumber, watermelon, and lemon water support the kidneys.",
+    foodFavor: ["Alkaline, balanced diet", "Cucumber, watermelon, lemon water"],
+    foodAvoid: ["Acidic, unbalanced foods"]
   },
   {
     name: "Scorpio",
@@ -165,11 +215,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♏",
     element: "Water",
     mode: "Fixed",
-    guidance: "Moon in Scorpio deepens the emotional field. Keep confidence, investigate gently, and let honesty transform what secrecy has hardened.",
+    guidance: "Moon in Scorpio favors creative and intellectual work, and even resolving stubborn problems — just handle matters of emotion with care. Keep the feet warm; a fair day to start renovations.",
     bestFor: ["shadow work", "intimacy", "release"],
-    watch: "Suspicion, control, testing people instead of trusting signals.",
+    avoid: ["suspicion", "control", "testing loyalty"],
+    relationships: "Passion and flirtation intensify, and bonds deepen, but so can jealousy and suspicion. Keep confidences and let honesty do the transforming.",
+    business: "One of the most emotionally charged stretches — keep distance from authority figures, but trust the heightened focus for serious, weighty decisions.",
+    housework: "Good for clearing out old, useless clutter, especially the dusty forgotten corners. Laundry and dishes go well; skip airing bedding or storing damp clothes.",
+    gardening: "A leaf day with descending energy. Gather medicinal herbs, graft, and mow, but hold off on enriching vegetable beds or felling trees.",
     activeOrgans: ["Reproductive organs", "Colon", "Bladder", "Pelvis"],
-    foodNote: "Cleansing, regenerating foods. Avoid extremes; deep, purposeful nourishment is favored."
+    foodNote: "Cleansing, regenerating foods. Avoid extremes; deep, purposeful nourishment is favored.",
+    foodFavor: ["Cleansing, regenerating foods", "Purposeful nourishment"],
+    foodAvoid: ["Extremes"]
   },
   {
     name: "Sagittarius",
@@ -177,11 +233,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♐",
     element: "Fire",
     mode: "Mutable",
-    guidance: "Moon in Sagittarius needs meaning and horizon. Study, move, pray, tell the truth kindly, and let perspective return.",
+    guidance: "Moon in Sagittarius brings cheerful energy — good for contracts, applications, and travel. Don't overload yourself; it's also a fine day for massages, manicures, and other care.",
     bestFor: ["travel plans", "teaching", "faith"],
-    watch: "Restlessness, bluntness, skipping details that matter.",
+    avoid: ["restlessness", "bluntness", "skipping details"],
+    relationships: "A favorable stretch for romantic outings, celebrations, and adventure together. Romance now runs passionate and optimistic, if sometimes brief.",
+    business: "Cheerful energy and rising activity favor contracts, applications, and legal matters. Good for launching ventures and travel, not for buying property.",
+    housework: "Finish what you're motivated to finish. Glass cleans and polishes easily; a good stretch for ironing, organizing clothes, preserving, and baking.",
+    gardening: "A fruit day. Set fruit trees, sow grain, and deal with underground pests, but hold off on new planting or tilling.",
     activeOrgans: ["Hips", "Thighs", "Liver", "Sciatic nerve"],
-    foodNote: "Generous, liver-supportive foods. Bitter greens, beets, and artichoke are especially beneficial."
+    foodNote: "Generous, liver-supportive foods. Bitter greens, beets, and artichoke are especially beneficial.",
+    foodFavor: ["Liver-supportive foods", "Bitter greens, beets, artichoke"],
+    foodAvoid: ["Liver-taxing rich foods"]
   },
   {
     name: "Capricorn",
@@ -189,11 +251,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♑",
     element: "Earth",
     mode: "Cardinal",
-    guidance: "Moon in Capricorn favors discipline and devotion. Make the promise practical, respect limits, and build what can hold weight.",
+    guidance: "Moon in Capricorn favors planning and starting serious projects, along with cosmetic and eye care. Steer clear of bureaucratic offices today.",
     bestFor: ["priorities", "career", "long-term plans"],
-    watch: "Coldness, self-pressure, measuring worth only by output.",
+    avoid: ["coldness", "self-criticism", "workaholism"],
+    relationships: "Better for quiet, businesslike contact than romance or celebration — say less, and let commitment build slowly. What starts now can run long and steady.",
+    business: "Favorable for planning and starting serious projects, work needing precision or instruction-following, and real estate. Avoid loans, debts, and job applications; logic runs strong.",
+    housework: "Good for deep, unsentimental decluttering — it's easier to let things go now. Skip storing clothes or shoes, and mind your knees while you work.",
+    gardening: "A root day with rising energy. Plant edible roots and winter vegetables, weed, compost, and manage underground pests — harvest and seed quality are both strong.",
     activeOrgans: ["Knees", "Bones", "Joints", "Teeth", "Nails"],
-    foodNote: "Mineral-rich foods: bone broth, leafy greens, dairy. Support structural health and the skeletal system."
+    foodNote: "Mineral-rich foods: bone broth, leafy greens, dairy. Support structural health and the skeletal system.",
+    foodFavor: ["Mineral-rich foods", "Bone broth, leafy greens, dairy"],
+    foodAvoid: ["Mineral-depleting foods"]
   },
   {
     name: "Aquarius",
@@ -201,11 +269,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♒",
     element: "Air",
     mode: "Fixed",
-    guidance: "Moon in Aquarius brings distance and pattern recognition. Think systemically, refresh friendships, and give your feelings some sky.",
+    guidance: "Moon in Aquarius sparks curiosity about the unknown, with flashes of inspiration — a fortunate day for meetings and conferences. Skip the bureaucratic offices, and take care of your legs.",
     bestFor: ["community", "ideas", "technology"],
-    watch: "Detachment, contrarian reflexes, explaining feelings away.",
+    avoid: ["detachment", "rigidity", "denying feelings"],
+    relationships: "Favorable for friendship and flirtation — let originality and warmth draw people in. Bonds lean platonic, with friendship reinforcing romance.",
+    business: "Good for meetings and conferences, tricky for approaching bosses or authority. Innovation, research, and public speaking flourish.",
+    housework: "Good for dry cleaning, new electronics, window washing, airing rooms, and laundry that needs a fresh smell. Baking and small celebrations also favored.",
+    gardening: "One of the least fertile signs. Focus on pest and disease prevention; skip planting or transplanting, since young growth struggles now.",
     activeOrgans: ["Shins", "Ankles", "Circulatory system"],
-    foodNote: "Light, hydrating foods. Good circulation is supported by moderate movement and steady fluid intake."
+    foodNote: "Light, hydrating foods. Good circulation is supported by moderate movement and steady fluid intake.",
+    foodFavor: ["Light, hydrating foods", "Steady fluid intake"],
+    foodAvoid: ["Dehydrating foods and drinks"]
   },
   {
     name: "Pisces",
@@ -213,11 +287,17 @@ const zodiacSigns: ZodiacSign[] = [
     symbol: "♓",
     element: "Water",
     mode: "Mutable",
-    guidance: "Moon in Pisces thins the veil. Dream, make art, meditate, forgive gently, and protect your sensitivity with clear edges.",
+    guidance: "Moon in Pisces favors rest, romance, and creativity — saunas and hand or foot baths suit the mood. Alcohol, coffee, and some medicines hit harder than usual, so ease off them today.",
     bestFor: ["dreamwork", "music", "compassion"],
-    watch: "Blurred boundaries, escapism, absorbing emotions that are not yours.",
+    avoid: ["blurred boundaries", "escapism", "absorbing others' emotions"],
+    relationships: "Love now can feel larger than life — follow intuition, but stay alert to illusion, and be ready to walk away if doubt lingers.",
+    business: "Favors creative work, seeking investors, and charitable efforts more than hard strategy. Rest and intuition serve better than mental grind; legal matters can succeed.",
+    housework: "A time to rest more than push. Water-based chores like laundry and mopping suit the mood; leave bedding unaired, since damp lingers.",
+    gardening: "One of the most fertile signs. Plant leafy vegetables, water indoor plants, mow the lawn, but skip pruning or preserving, since harvests won't keep.",
     activeOrgans: ["Feet", "Lymphatic system", "Immune system"],
-    foodNote: "Gentle, nourishing foods. Fish and easily digestible proteins are supportive. Avoid anything intoxicating."
+    foodNote: "Gentle, nourishing foods. Fish and easily digestible proteins are supportive. Avoid anything intoxicating.",
+    foodFavor: ["Gentle, nourishing foods", "Fish and digestible proteins"],
+    foodAvoid: ["Intoxicating substances"]
   }
 ];
 
@@ -778,13 +858,23 @@ function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: 
 
       <p>{wisdom.nature}</p>
 
-      <div className="focus-list compact">
-        {wisdom.auspiciousFor.map((item) => (
-          <span key={item}>{item}</span>
-        ))}
+      <div className="organ-row">
+        <small>Favor</small>
+        <div className="organ-chips">
+          {wisdom.auspiciousFor.map((item) => (
+            <span key={item} className="organ-chip green">{item}</span>
+          ))}
+        </div>
       </div>
 
-      <p className="watch-note">Avoid: {wisdom.avoid.join(", ")}.</p>
+      <div className="organ-row">
+        <small>Avoid</small>
+        <div className="organ-chips">
+          {wisdom.avoid.map((item) => (
+            <span key={item} className="organ-chip red">{item}</span>
+          ))}
+        </div>
+      </div>
     </article>
   );
 }
@@ -821,19 +911,20 @@ function ZodiacGuidancePanel({
 
       <p>{zodiac.sign.guidance}</p>
 
-      <div className="focus-list compact">
-        {zodiac.sign.bestFor.map((item) => (
-          <span key={item}>{item}</span>
-        ))}
+      <div className="organ-row">
+        <small>Favor</small>
+        <div className="organ-chips">
+          {zodiac.sign.bestFor.map((item) => (
+            <span key={item} className="organ-chip green">{item}</span>
+          ))}
+        </div>
       </div>
 
-      <p className="watch-note">{zodiac.sign.watch}</p>
-
       <div className="organ-row">
-        <small>Active body areas</small>
+        <small>Avoid</small>
         <div className="organ-chips">
-          {zodiac.sign.activeOrgans.map((organ) => (
-            <span key={organ} className="organ-chip teal">{organ}</span>
+          {zodiac.sign.avoid.map((item) => (
+            <span key={item} className="organ-chip red">{item}</span>
           ))}
         </div>
       </div>
@@ -892,39 +983,21 @@ function SymbolPanel({
 
       <p>{source.overview}</p>
 
-      <div className="focus-list compact">
-        {source.doToday.map((item) => (
-          <span key={item}>{item}</span>
-        ))}
-      </div>
-
-      <p className="watch-note">Avoid: {source.avoidToday.join(", ")}.</p>
-
       <div className="organ-row">
-        <small>Active body areas</small>
+        <small>Favor</small>
         <div className="organ-chips">
-          {source.activeOrgans.map((organ) => (
-            <span key={organ} className="organ-chip teal">{organ}</span>
+          {source.doToday.map((item) => (
+            <span key={item} className="organ-chip green">{item}</span>
           ))}
         </div>
       </div>
 
-      <div className="wisdom-grid symbol-extra-grid">
-        <div className="wisdom-section">
-          <h3>Stones</h3>
-          <p>{source.stones}</p>
-        </div>
-        <div className="wisdom-section">
-          <h3>Meditation</h3>
-          <p>{source.meditation}</p>
-        </div>
-        <div className="wisdom-section">
-          <h3>Relationships</h3>
-          <p>{source.relationships}</p>
-        </div>
-        <div className="wisdom-section">
-          <h3>Dreams</h3>
-          <p>{source.dreamGuidance}</p>
+      <div className="organ-row">
+        <small>Avoid</small>
+        <div className="organ-chips">
+          {source.avoidToday.map((item) => (
+            <span key={item} className="organ-chip red">{item}</span>
+          ))}
         </div>
       </div>
 
@@ -935,10 +1008,19 @@ function SymbolPanel({
   );
 }
 
-// Body wisdom — active organs from both sources, do/avoid chips, food guidance
-function BodyWisdomPanel({ zodiac, symbolDay }: { zodiac: ReturnType<typeof getMoonZodiac>; symbolDay: SymbolDay }) {
+// Body wisdom — active areas from all three sources (color-tagged gold/silver/blue for
+// tithi/vronsky/zodiac), do/avoid chips, meditation, and food guidance.
+function BodyWisdomPanel({
+  day,
+  zodiac,
+  symbolDay
+}: {
+  day: MoonDay;
+  zodiac: ReturnType<typeof getMoonZodiac>;
+  symbolDay: SymbolDay;
+}) {
   const daySource = symbolDay.source;
-  const combinedOrgans = [...new Set([...daySource.activeOrgans, ...zodiac.sign.activeOrgans])];
+  const tithiWisdom = getTithiWisdom(day.tithiNumber, day.paksha);
 
   return (
     <article className="panel body-wisdom-panel">
@@ -949,10 +1031,16 @@ function BodyWisdomPanel({ zodiac, symbolDay }: { zodiac: ReturnType<typeof getM
 
       <div className="wisdom-grid">
         <div className="wisdom-section">
-          <h3>Active today</h3>
+          <h3>Active areas</h3>
           <div className="organ-chips">
-            {combinedOrgans.map((organ) => (
-              <span key={organ} className="organ-chip teal">{organ}</span>
+            {tithiWisdom.activeOrgans.map((organ) => (
+              <span key={`tithi-${organ}`} className="organ-chip gold">{organ}</span>
+            ))}
+            {daySource.activeOrgans.map((organ) => (
+              <span key={`symbol-${organ}`} className="organ-chip silver">{organ}</span>
+            ))}
+            {zodiac.sign.activeOrgans.map((organ) => (
+              <span key={`zodiac-${organ}`} className="organ-chip blue">{organ}</span>
             ))}
           </div>
         </div>
@@ -960,8 +1048,14 @@ function BodyWisdomPanel({ zodiac, symbolDay }: { zodiac: ReturnType<typeof getM
         <div className="wisdom-section">
           <h3>Favor</h3>
           <div className="organ-chips">
-            {daySource.doToday.map((item) => (
-              <span key={item} className="organ-chip green">{item}</span>
+            {tithiWisdom.dietFavor.map((item) => (
+              <span key={`tithi-${item}`} className="organ-chip green">{item}</span>
+            ))}
+            {daySource.foodFavor.map((item) => (
+              <span key={`symbol-${item}`} className="organ-chip green">{item}</span>
+            ))}
+            {zodiac.sign.foodFavor.map((item) => (
+              <span key={`zodiac-${item}`} className="organ-chip green">{item}</span>
             ))}
           </div>
         </div>
@@ -969,17 +1063,90 @@ function BodyWisdomPanel({ zodiac, symbolDay }: { zodiac: ReturnType<typeof getM
         <div className="wisdom-section">
           <h3>Avoid</h3>
           <div className="organ-chips">
-            {daySource.avoidToday.map((item) => (
-              <span key={item} className="organ-chip amber">{item}</span>
+            {tithiWisdom.dietAvoid.map((item) => (
+              <span key={`tithi-${item}`} className="organ-chip red">{item}</span>
+            ))}
+            {daySource.foodAvoid.map((item) => (
+              <span key={`symbol-${item}`} className="organ-chip red">{item}</span>
+            ))}
+            {zodiac.sign.foodAvoid.map((item) => (
+              <span key={`zodiac-${item}`} className="organ-chip red">{item}</span>
             ))}
           </div>
         </div>
 
+        <div className="wisdom-section">
+          <h3 className="silver">Meditation</h3>
+          <p>{daySource.meditation}</p>
+        </div>
+
         <div className="wisdom-section food-section">
-          <h3>Food — moon day {symbolDay.number}</h3>
+          <h3 className="silver">Food — moon day {symbolDay.number}</h3>
           <p>{daySource.foodNote}</p>
-          <h3>Food — {zodiac.sign.symbol} {zodiac.sign.name}</h3>
+          <h3 className="blue">Food — {zodiac.sign.symbol} {zodiac.sign.name}</h3>
           <p>{zodiac.sign.foodNote}</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// Relationships — merges the Vronsky lunar-day angle (silver) with the Moon-sign angle (blue).
+function RelationshipsPanel({
+  zodiac,
+  symbolDay
+}: {
+  zodiac: ReturnType<typeof getMoonZodiac>;
+  symbolDay: SymbolDay;
+}) {
+  return (
+    <article className="panel relationships-panel">
+      <div className="panel-heading">
+        <Heart size={19} />
+        <h2>Relationships</h2>
+      </div>
+
+      <div className="wisdom-grid dual-source-grid">
+        <div className="wisdom-section">
+          <h3 className="silver">Moon day {symbolDay.number} · {symbolDay.source.symbol}</h3>
+          <p>{symbolDay.source.relationships}</p>
+        </div>
+        <div className="wisdom-section">
+          <h3 className="blue">Moon in {zodiac.sign.name}</h3>
+          <p>{zodiac.sign.relationships}</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// Business, Housework & Garden — same dual-source layout as Relationships; the zodiac side
+// additionally carries gardening guidance (om-journal's root/leaf/flower/fruit-day theory).
+function BusinessHouseworkGardenPanel({
+  zodiac,
+  symbolDay
+}: {
+  zodiac: ReturnType<typeof getMoonZodiac>;
+  symbolDay: SymbolDay;
+}) {
+  return (
+    <article className="panel business-panel">
+      <div className="panel-heading">
+        <Briefcase size={19} />
+        <h2>Business, Housework & Garden</h2>
+      </div>
+
+      <div className="wisdom-grid dual-source-grid">
+        <div className="wisdom-section">
+          <h3 className="silver">Moon day {symbolDay.number} · {symbolDay.source.symbol}</h3>
+          <p>{symbolDay.source.business}</p>
+          <p>{symbolDay.source.housework}</p>
+        </div>
+        <div className="wisdom-section">
+          <h3 className="blue">Moon in {zodiac.sign.name}</h3>
+          <p>{zodiac.sign.business}</p>
+          <p>{zodiac.sign.housework}</p>
+          <p>{zodiac.sign.gardening}</p>
         </div>
       </div>
     </article>
@@ -1390,7 +1557,11 @@ function App() {
       </section>
 
       <section className="content-grid">
-        <BodyWisdomPanel zodiac={moonZodiac} symbolDay={symbolDay} />
+        <BodyWisdomPanel day={today} zodiac={moonZodiac} symbolDay={symbolDay} />
+
+        <RelationshipsPanel zodiac={moonZodiac} symbolDay={symbolDay} />
+
+        <BusinessHouseworkGardenPanel zodiac={moonZodiac} symbolDay={symbolDay} />
 
         <article className="panel dream-panel">
           <div className="panel-heading">
