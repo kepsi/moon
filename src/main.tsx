@@ -22,6 +22,7 @@ import {
 import { Body, EclipticGeoMoon, MoonPhase, Observer, SearchMoonPhase, SearchRiseSet } from "astronomy-engine";
 import tzLookup from "tz-lookup";
 import { getLunarSourceDay, lunarDaySource, type LunarSourceDay } from "./lunarDaySource";
+import { getTithiWisdom } from "./tithiSource";
 import "./styles.css";
 
 type MoonDay = {
@@ -599,8 +600,8 @@ function moonIconStyle(percent: number, phaseAngle: number) {
   };
 }
 
-function wheelLabelStyle(index: number, total: number, radius = 44) {
-  const angle = (index / total) * 360 - 90;
+function wheelLabelStyle(index: number, total: number, radius = 44, centerOffsetDeg = 0) {
+  const angle = (index / total) * 360 - 90 + centerOffsetDeg;
   const radians = (angle * Math.PI) / 180;
 
   return {
@@ -644,18 +645,53 @@ function PeriodRange({
   );
 }
 
-// Combined moon orb + zodiac wheel for the hero section
-function MoonZodiacHero({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typeof getMoonZodiac> }) {
+// Combined dial for the hero: zodiac ring (outer, 12), tithi ring (inner, 30 ticks +
+// pointer), moon-day symbol ring (30 ticks + the day's glyph) — all three lunar/solar
+// calendars this app tracks, positioned around one moon orb.
+function MoonZodiacHero({
+  day,
+  zodiac,
+  symbolDay
+}: {
+  day: MoonDay;
+  zodiac: ReturnType<typeof getMoonZodiac>;
+  symbolDay: SymbolDay;
+}) {
   return (
     <div
       className="moon-zodiac-hero"
-      aria-label={`${day.phaseName}, ${day.phasePercent}% illuminated, Moon in ${zodiac.sign.name}`}
+      aria-label={`${day.phaseName}, ${day.phasePercent}% illuminated, Tithi ${day.lunarDayNumber}, Moon in ${zodiac.sign.name}, moon day symbol ${symbolDay.source.symbol}`}
     >
+      <span className="hero-tick-ring zodiac-ring-ticks" aria-hidden="true" />
+      <span className="hero-tick-ring tithi-ring" aria-hidden="true" />
+      <span className="hero-tick-ring symbol-ring" aria-hidden="true" />
+
+      {lunarDaySource.map((source) => (
+        <span
+          key={source.lunarDay}
+          className={`hero-symbol-glyph${source.lunarDay === symbolDay.number ? " active" : ""}`}
+          style={wheelLabelStyle(source.lunarDay - 1, 30, 34, 6)}
+          title={`Day ${source.lunarDay}: ${source.symbol}`}
+        >
+          {source.emoji}
+        </span>
+      ))}
+
+      <div className="hero-tithi-pointer" style={pointerStyle(day.phaseAngle)} />
+
+      <span
+        className="hero-tithi-glyph"
+        style={wheelLabelStyle(day.lunarDayNumber - 1, 30, 24, 6)}
+        title={`Tithi ${day.lunarDayNumber}: ${day.tithiName}`}
+      >
+        {day.lunarDayNumber}
+      </span>
+
       {zodiacSigns.map((sign, index) => (
         <span
           key={sign.name}
           className={`zodiac-hero-label${index === zodiac.signIndex ? " active" : ""}`}
-          style={wheelLabelStyle(index, 12, 46)}
+          style={wheelLabelStyle(index, 12, 46, 15)}
           title={`${sign.name} — ${sign.element} ${sign.mode}`}
         >
           {sign.symbol}
@@ -664,48 +700,53 @@ function MoonZodiacHero({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<type
 
       <div className="hero-degree-pointer" style={pointerStyle(zodiac.longitude)} />
 
-      <div className="hero-moon-center" style={moonIconStyle(day.phasePercent, day.phaseAngle)}>
+      <div className="hero-moon-disk" style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
+
+      <div className="hero-moon-badge-wrap">
         <div className="hero-moon-badge">
           <span>{day.phaseName}</span>
           <strong>{day.phasePercent}%</strong>
-          <small>{zodiac.sign.symbol} {zodiac.sign.name}</small>
         </div>
       </div>
     </div>
   );
 }
 
-const TITHI_SLOTS = Array.from({ length: 30 }, (_, index) => index + 1);
-
-// Tithi panel — the precise Vedic lunar day, driven by the exact Moon-Sun angle.
+// Tithi panel — the precise Vedic lunar day, driven by the exact Moon-Sun angle. The wheel
+// visual now lives combined into the hero dial; this panel carries the traditional
+// Panchang-style reference content (deity, tithi class, dos/don'ts).
 function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: Date; end: Date }; timeZone: string }) {
-  const moonAngle = day.phaseAngle;
+  const wisdom = getTithiWisdom(day.tithiNumber, day.paksha);
 
   return (
-    <article className="panel clock-panel">
+    <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <Orbit size={19} />
-        <h2>Tithi · Day {day.lunarDayNumber}</h2>
+        <h2>Tithi {day.lunarDayNumber} · {day.tithiName}</h2>
       </div>
-      <div className="clock-face lunar-clock" aria-label={`Tithi pointer on day ${day.lunarDayNumber}`}>
-        {TITHI_SLOTS.map((slot) => (
-          <span
-            className={`clock-label${slot === day.lunarDayNumber ? " active" : ""}`}
-            key={slot}
-            style={wheelLabelStyle(slot - 1, TITHI_SLOTS.length)}
-            title={`Tithi ${slot}`}
-          >
-            {slot}
-          </span>
-        ))}
-        <div className="clock-pointer moon-pointer" style={pointerStyle(moonAngle)} />
-        <div className="clock-center">
-          <span>{day.paksha}</span>
-          <strong>{day.lunarDayNumber}</strong>
-          <small>{day.tithiName}</small>
+
+      <div className="zodiac-guide-header">
+        <span className="zodiac-symbol-large">{day.lunarDayNumber}</span>
+        <div>
+          <div className="zodiac-meta">
+            <span>{day.paksha}</span>
+            <span>{wisdom.group}</span>
+          </div>
+          <p className="zodiac-degree-note">Ruled by {wisdom.deity}</p>
         </div>
       </div>
-      <PeriodRange start={window.start} end={window.end} timeZone={timeZone} centered />
+
+      <PeriodRange start={window.start} end={window.end} timeZone={timeZone} />
+
+      <p>{wisdom.nature}</p>
+
+      <div className="focus-list compact">
+        {wisdom.auspiciousFor.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+
+      <p className="watch-note">Avoid: {wisdom.avoid.join(", ")}.</p>
     </article>
   );
 }
@@ -762,7 +803,10 @@ function ZodiacGuidancePanel({
   );
 }
 
-// Symbol panel — the OM Journal moon-day archetype, moonrise-to-moonrise.
+// Symbol panel — the OM Journal moon-day archetype, moonrise-to-moonrise. The wheel visual
+// now lives combined into the hero dial; this panel carries the fuller OM Journal reference
+// content (tagline, overview, stones, meditation, relationships) alongside the existing
+// do/avoid and dream fields.
 function SymbolPanel({
   symbolDay,
   timeZone,
@@ -774,27 +818,22 @@ function SymbolPanel({
   locationStatus: LocationStatus;
   onEnableLocation: () => void;
 }) {
+  const source = symbolDay.source;
+
   return (
-    <article className="panel clock-panel symbol-wheel-panel">
+    <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <BookOpen size={19} />
-        <h2>Moon Day Symbol · {symbolDay.source.symbol}</h2>
+        <h2>Moon Day Symbol · {source.symbol}</h2>
       </div>
-      <div className="clock-face lunar-clock" aria-label={`Moon day symbol pointer on day ${symbolDay.number}`}>
-        {lunarDaySource.map((source) => (
-          <span
-            className={`clock-label emoji-label${source.lunarDay === symbolDay.number ? " active" : ""}`}
-            key={source.lunarDay}
-            style={wheelLabelStyle(source.lunarDay - 1, lunarDaySource.length)}
-            title={`Day ${source.lunarDay}: ${source.symbol}`}
-          >
-            {source.emoji}
-          </span>
-        ))}
-        <div className="clock-center">
-          <span>Moon day</span>
-          <strong>{symbolDay.source.emoji}</strong>
-          <small>{symbolDay.source.symbol}</small>
+
+      <div className="zodiac-guide-header">
+        <span className="zodiac-symbol-large" aria-hidden="true">{source.emoji}</span>
+        <div>
+          <div className="zodiac-meta">
+            <span>Day {symbolDay.number}</span>
+          </div>
+          <p className="zodiac-degree-note">{source.tagline}</p>
         </div>
       </div>
 
@@ -811,11 +850,47 @@ function SymbolPanel({
         </button>
       ) : null}
 
-      <PeriodRange start={symbolDay.start} end={symbolDay.end} timeZone={timeZone} centered approximate={symbolDay.approximate} />
+      <PeriodRange start={symbolDay.start} end={symbolDay.end} timeZone={timeZone} approximate={symbolDay.approximate} />
 
-      <p>{symbolDay.source.dreamGuidance}</p>
+      <p>{source.overview}</p>
 
-      <a href={symbolDay.source.sourceUrl} target="_blank" rel="noreferrer">
+      <div className="focus-list compact">
+        {source.doToday.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+
+      <p className="watch-note">Avoid: {source.avoidToday.join(", ")}.</p>
+
+      <div className="organ-row">
+        <small>Active body areas</small>
+        <div className="organ-chips">
+          {source.activeOrgans.map((organ) => (
+            <span key={organ} className="organ-chip teal">{organ}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="wisdom-grid symbol-extra-grid">
+        <div className="wisdom-section">
+          <h3>Stones</h3>
+          <p>{source.stones}</p>
+        </div>
+        <div className="wisdom-section">
+          <h3>Meditation</h3>
+          <p>{source.meditation}</p>
+        </div>
+        <div className="wisdom-section">
+          <h3>Relationships</h3>
+          <p>{source.relationships}</p>
+        </div>
+        <div className="wisdom-section">
+          <h3>Dreams</h3>
+          <p>{source.dreamGuidance}</p>
+        </div>
+      </div>
+
+      <a href={source.sourceUrl} target="_blank" rel="noreferrer">
         Source: OM Journal moon day {symbolDay.number} →
       </a>
     </article>
@@ -1059,7 +1134,7 @@ function App() {
         </nav>
 
         <div className="hero-grid">
-          <MoonZodiacHero day={today} zodiac={moonZodiac} />
+          <MoonZodiacHero day={today} zodiac={moonZodiac} symbolDay={symbolDay} />
 
           <article className="daily-reading">
             <div className="date-row">
