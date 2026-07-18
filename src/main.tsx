@@ -1,8 +1,27 @@
 import React from "react";
 import { Root, createRoot } from "react-dom/client";
-import { Activity, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eye, Moon, Orbit, Sparkles, SunMedium } from "lucide-react";
-import { EclipticGeoMoon, MoonPhase } from "astronomy-engine";
-import { getLunarSourceDay, lunarDaySource } from "./lunarDaySource";
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  Bell,
+  BookOpen,
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  MapPin,
+  Moon,
+  Orbit,
+  Sparkles,
+  SunMedium,
+  Sunrise,
+  Sunset
+} from "lucide-react";
+import { Body, EclipticGeoMoon, MoonPhase, Observer, SearchMoonPhase, SearchRiseSet } from "astronomy-engine";
+import tzLookup from "tz-lookup";
+import { getLunarSourceDay, lunarDaySource, type LunarSourceDay } from "./lunarDaySource";
 import "./styles.css";
 
 type MoonDay = {
@@ -14,13 +33,27 @@ type MoonDay = {
   tithiNumber: number;
   tithiName: string;
   paksha: "Shukla" | "Krishna";
-  symbol: string;
   archetype: string;
   headline: string;
   guidance: string;
   focus: string[];
   ritual: string;
   affirmation: string;
+};
+
+type Coords = { lat: number; lon: number };
+type LocationStatus = "idle" | "pending" | "denied" | "unsupported";
+
+type LadderEntry = { number: number; start: Date; end: Date };
+
+// The lunar day carried by the OM Journal symbols: moonrise-to-moonrise when we
+// know the reader's location, otherwise a calendar-day (local midnight) estimate.
+type SymbolDay = {
+  number: number;
+  start: Date;
+  end: Date;
+  approximate: boolean;
+  source: LunarSourceDay;
 };
 
 type ZodiacSign = {
@@ -329,6 +362,80 @@ function getMoonZodiac(date: Date) {
   };
 }
 
+function angularDiff(a: number, b: number) {
+  const diff = normalizeDegrees(a - b);
+  return diff > 180 ? diff - 360 : diff;
+}
+
+function getMoonLongitude(date: Date) {
+  return normalizeDegrees(EclipticGeoMoon(date).lon);
+}
+
+// Bisects a bracketed sign change to find the moment the Moon's ecliptic longitude crosses targetLon.
+function bisectLongitudeCrossing(startMs: number, endMs: number, targetLon: number) {
+  let lo = startMs;
+  let hi = endMs;
+  const loSign = Math.sign(angularDiff(getMoonLongitude(new Date(lo)), targetLon)) || 1;
+
+  for (let i = 0; i < 28; i++) {
+    const mid = (lo + hi) / 2;
+    const midSign = Math.sign(angularDiff(getMoonLongitude(new Date(mid)), targetLon)) || loSign;
+    if (midSign === loSign) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+
+  return new Date((lo + hi) / 2);
+}
+
+// No built-in search for geocentric Moon longitude crossings, so step in 3h increments to
+// bracket the sign change, then bisect. The Moon moves ~13deg/day, so a zodiac sign (30deg)
+// is never crossed in under ~2 days — 40 steps of 3h (5 days) is a safe search window.
+function findMoonLongitudeCrossing(from: Date, targetLon: number, searchBackward: boolean) {
+  const stepMs = (searchBackward ? -3 : 3) * 60 * 60 * 1000;
+  let t0 = from.getTime();
+  let sign0 = Math.sign(angularDiff(getMoonLongitude(new Date(t0)), targetLon)) || 1;
+
+  for (let i = 0; i < 40; i++) {
+    const t1 = t0 + stepMs;
+    const sign1 = Math.sign(angularDiff(getMoonLongitude(new Date(t1)), targetLon)) || sign0;
+    if (sign1 !== sign0) {
+      return bisectLongitudeCrossing(searchBackward ? t1 : t0, searchBackward ? t0 : t1, targetLon);
+    }
+    t0 = t1;
+    sign0 = sign1;
+  }
+
+  return from;
+}
+
+// Start/end of the Moon's current zodiac sign transit (sign ingress/egress times).
+function getZodiacWindow(date: Date, signIndex: number) {
+  const lowLon = signIndex * 30;
+  const highLon = ((signIndex + 1) * 30) % 360;
+
+  return {
+    start: findMoonLongitudeCrossing(date, lowLon, true),
+    end: findMoonLongitudeCrossing(date, highLon, false)
+  };
+}
+
+// Start/end of the current lunar day (tithi): the moments the Moon-Sun angle
+// crosses the 12deg boundaries bracketing this tithi.
+function getTithiWindow(date: Date, lunarDayNumber: number) {
+  const lowAngle = (lunarDayNumber - 1) * 12;
+  const highAngle = (lunarDayNumber * 12) % 360;
+  const start = SearchMoonPhase(lowAngle, date, -3);
+  const end = SearchMoonPhase(highAngle, date, 3);
+
+  return {
+    start: start ? start.date : date,
+    end: end ? end.date : date
+  };
+}
+
 function getPhaseName(age: number) {
   if (age < 1.2 || age > 28.3) return "New Moon";
   if (age < 6.4) return "Waxing Crescent";
@@ -347,7 +454,6 @@ function getMoonDay(date: Date): MoonDay {
   const tithiNumber = ((lunarDayNumber - 1) % 15) + 1;
   const paksha = lunarDayNumber <= 15 ? "Shukla" : "Krishna";
   const wisdom = dayWisdom[tithiNumber - 1];
-  const source = getLunarSourceDay(lunarDayNumber);
   const illumination = (1 - Math.cos((phaseAngle * Math.PI) / 180)) / 2;
 
   return {
@@ -359,9 +465,69 @@ function getMoonDay(date: Date): MoonDay {
     tithiNumber,
     tithiName: tithiNames[tithiNumber - 1],
     paksha,
-    symbol: source.symbol,
     ...wisdom
   };
+}
+
+// "Lunar day number": the civil, calendar-day version of the tithi — whichever tithi is
+// active at local midnight governs the whole calendar date, the way simple moon-calendar
+// apps show one "Day N" per date (unlike the precise Tithi, which can flip mid-day).
+function getCivilLunarDay(date: Date) {
+  const anchor = getMoonDay(atHour(date, 0));
+  return {
+    number: anchor.lunarDayNumber,
+    start: atHour(date, 0),
+    end: atHour(addDays(date, 1), 0)
+  };
+}
+
+// Builds a run of moonrise-to-moonrise windows for the current lunar month. Day 1 begins at
+// the New Moon itself (same anchor as tithi's Day 1) and runs to the first subsequent
+// moonrise; every later day runs moonrise to moonrise. Confirmed against OM Journal's own
+// site: their "Day 4" started at the moonrise following our un-shifted "Day 3" — an
+// off-by-one that this New-Moon-anchored Day 1 corrects. Reused for every symbol-day lookup
+// in a render pass instead of re-searching from the New Moon each time.
+function buildMoonriseLadder(observer: Observer, from: Date, daysAhead: number): LadderEntry[] {
+  const newMoon = SearchMoonPhase(0, from, -40);
+  if (!newMoon) return [];
+
+  const firstRise = SearchRiseSet(Body.Moon, observer, 1, newMoon.date, 3);
+  if (!firstRise) return [];
+
+  const ladder: LadderEntry[] = [];
+  const limit = addDays(from, daysAhead + 2).getTime();
+  let start = newMoon.date;
+  let end = firstRise.date;
+  let number = 1;
+
+  while (start.getTime() < limit && number <= 33) {
+    ladder.push({ number, start, end });
+    if (end.getTime() >= limit) break;
+    const next = SearchRiseSet(Body.Moon, observer, 1, new Date(end.getTime() + 60_000), 3);
+    if (!next) break;
+    start = end;
+    end = next.date;
+    number += 1;
+  }
+
+  return ladder;
+}
+
+function findLadderEntry(ladder: LadderEntry[], date: Date) {
+  return ladder.find((entry) => date >= entry.start && date < entry.end);
+}
+
+// Resolves the OM Journal "symbol day" for a moment: moonrise-to-moonrise when we have the
+// reader's coordinates and a ladder covering that moment, otherwise the civil-day estimate.
+function getSymbolDay(date: Date, ladder: LadderEntry[] | null): SymbolDay {
+  const entry = ladder ? findLadderEntry(ladder, date) : undefined;
+
+  if (entry) {
+    return { number: entry.number, start: entry.start, end: entry.end, approximate: false, source: getLunarSourceDay(entry.number) };
+  }
+
+  const civil = getCivilLunarDay(date);
+  return { number: civil.number, start: civil.start, end: civil.end, approximate: true, source: getLunarSourceDay(civil.number) };
 }
 
 function addDays(date: Date, days: number) {
@@ -403,6 +569,25 @@ function formatClock(date: Date, timeZone: string) {
   }).format(date);
 }
 
+function formatPeriodMoment(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone
+  }).format(date);
+}
+
+function formatTimeOnly(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone
+  }).format(date);
+}
+
 function moonIconStyle(percent: number, phaseAngle: number) {
   const waxing = phaseAngle <= 180;
   const shade = waxing
@@ -428,6 +613,35 @@ function pointerStyle(degrees: number) {
   return {
     transform: `translate(-50%, -100%) rotate(${degrees}deg)`
   };
+}
+
+// Start/end timestamps for a calendar's current unit (lunar day, zodiac sign, ...)
+function PeriodRange({
+  start,
+  end,
+  timeZone,
+  centered,
+  approximate
+}: {
+  start: Date;
+  end: Date;
+  timeZone: string;
+  centered?: boolean;
+  approximate?: boolean;
+}) {
+  return (
+    <div className={`period-range${centered ? " centered" : ""}${approximate ? " approximate" : ""}`}>
+      <div className="period-point">
+        <small>{approximate ? "Started (est.)" : "Started"}</small>
+        <strong>{formatPeriodMoment(start, timeZone)}</strong>
+      </div>
+      <ChevronRight className="period-arrow" size={14} />
+      <div className="period-point align-end">
+        <small>{approximate ? "Ends (est.)" : "Ends"}</small>
+        <strong>{formatPeriodMoment(end, timeZone)}</strong>
+      </div>
+    </div>
+  );
 }
 
 // Combined moon orb + zodiac wheel for the hero section
@@ -461,41 +675,51 @@ function MoonZodiacHero({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<type
   );
 }
 
-// Lunar day clock — symbols instead of numbers
-function LunarDayClock({ day }: { day: MoonDay }) {
+const TITHI_SLOTS = Array.from({ length: 30 }, (_, index) => index + 1);
+
+// Tithi panel — the precise Vedic lunar day, driven by the exact Moon-Sun angle.
+function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: Date; end: Date }; timeZone: string }) {
   const moonAngle = day.phaseAngle;
-  const currentSource = getLunarSourceDay(day.lunarDayNumber);
 
   return (
     <article className="panel clock-panel">
       <div className="panel-heading">
         <Orbit size={19} />
-        <h2>Lunar Month · Day {day.lunarDayNumber}</h2>
+        <h2>Tithi · Day {day.lunarDayNumber}</h2>
       </div>
-      <div className="clock-face lunar-clock" aria-label={`Lunar month pointer on day ${day.lunarDayNumber}`}>
-        {lunarDaySource.map((source) => (
+      <div className="clock-face lunar-clock" aria-label={`Tithi pointer on day ${day.lunarDayNumber}`}>
+        {TITHI_SLOTS.map((slot) => (
           <span
-            className={`clock-label emoji-label${source.lunarDay === day.lunarDayNumber ? " active" : ""}`}
-            key={source.lunarDay}
-            style={wheelLabelStyle(source.lunarDay - 1, lunarDaySource.length)}
-            title={`Day ${source.lunarDay}: ${source.symbol}`}
+            className={`clock-label${slot === day.lunarDayNumber ? " active" : ""}`}
+            key={slot}
+            style={wheelLabelStyle(slot - 1, TITHI_SLOTS.length)}
+            title={`Tithi ${slot}`}
           >
-            {source.emoji}
+            {slot}
           </span>
         ))}
         <div className="clock-pointer moon-pointer" style={pointerStyle(moonAngle)} />
         <div className="clock-center">
           <span>{day.paksha}</span>
-          <strong>{currentSource.emoji}</strong>
-          <small>{currentSource.symbol}</small>
+          <strong>{day.lunarDayNumber}</strong>
+          <small>{day.tithiName}</small>
         </div>
       </div>
+      <PeriodRange start={window.start} end={window.end} timeZone={timeZone} centered />
     </article>
   );
 }
 
 // Zodiac guidance text panel (the clock visual has moved into the hero)
-function ZodiacGuidancePanel({ zodiac }: { zodiac: ReturnType<typeof getMoonZodiac> }) {
+function ZodiacGuidancePanel({
+  zodiac,
+  window,
+  timeZone
+}: {
+  zodiac: ReturnType<typeof getMoonZodiac>;
+  window: { start: Date; end: Date };
+  timeZone: string;
+}) {
   return (
     <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
@@ -513,6 +737,8 @@ function ZodiacGuidancePanel({ zodiac }: { zodiac: ReturnType<typeof getMoonZodi
           <p className="zodiac-degree-note">{zodiac.degreeInSign}° in {zodiac.sign.name}</p>
         </div>
       </div>
+
+      <PeriodRange start={window.start} end={window.end} timeZone={timeZone} />
 
       <p>{zodiac.sign.guidance}</p>
 
@@ -536,9 +762,69 @@ function ZodiacGuidancePanel({ zodiac }: { zodiac: ReturnType<typeof getMoonZodi
   );
 }
 
+// Symbol panel — the OM Journal moon-day archetype, moonrise-to-moonrise.
+function SymbolPanel({
+  symbolDay,
+  timeZone,
+  locationStatus,
+  onEnableLocation
+}: {
+  symbolDay: SymbolDay;
+  timeZone: string;
+  locationStatus: LocationStatus;
+  onEnableLocation: () => void;
+}) {
+  return (
+    <article className="panel clock-panel symbol-wheel-panel">
+      <div className="panel-heading">
+        <BookOpen size={19} />
+        <h2>Moon Day Symbol · {symbolDay.source.symbol}</h2>
+      </div>
+      <div className="clock-face lunar-clock" aria-label={`Moon day symbol pointer on day ${symbolDay.number}`}>
+        {lunarDaySource.map((source) => (
+          <span
+            className={`clock-label emoji-label${source.lunarDay === symbolDay.number ? " active" : ""}`}
+            key={source.lunarDay}
+            style={wheelLabelStyle(source.lunarDay - 1, lunarDaySource.length)}
+            title={`Day ${source.lunarDay}: ${source.symbol}`}
+          >
+            {source.emoji}
+          </span>
+        ))}
+        <div className="clock-center">
+          <span>Moon day</span>
+          <strong>{symbolDay.source.emoji}</strong>
+          <small>{symbolDay.source.symbol}</small>
+        </div>
+      </div>
+
+      {symbolDay.approximate ? (
+        <button className="location-prompt" onClick={onEnableLocation} disabled={locationStatus === "pending"}>
+          <MapPin size={14} />
+          {locationStatus === "pending"
+            ? "Locating…"
+            : locationStatus === "denied"
+            ? "Location blocked — showing calendar-day estimate"
+            : locationStatus === "unsupported"
+            ? "Location unavailable — showing calendar-day estimate"
+            : "Enable location for exact moonrise-based times"}
+        </button>
+      ) : null}
+
+      <PeriodRange start={symbolDay.start} end={symbolDay.end} timeZone={timeZone} centered approximate={symbolDay.approximate} />
+
+      <p>{symbolDay.source.dreamGuidance}</p>
+
+      <a href={symbolDay.source.sourceUrl} target="_blank" rel="noreferrer">
+        Source: OM Journal moon day {symbolDay.number} →
+      </a>
+    </article>
+  );
+}
+
 // Body wisdom — active organs from both sources, do/avoid chips, food guidance
-function BodyWisdomPanel({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typeof getMoonZodiac> }) {
-  const daySource = getLunarSourceDay(day.lunarDayNumber);
+function BodyWisdomPanel({ zodiac, symbolDay }: { zodiac: ReturnType<typeof getMoonZodiac>; symbolDay: SymbolDay }) {
+  const daySource = symbolDay.source;
   const combinedOrgans = [...new Set([...daySource.activeOrgans, ...zodiac.sign.activeOrgans])];
 
   return (
@@ -577,7 +863,7 @@ function BodyWisdomPanel({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typ
         </div>
 
         <div className="wisdom-section food-section">
-          <h3>Food — lunar day {day.lunarDayNumber}</h3>
+          <h3>Food — moon day {symbolDay.number}</h3>
           <p>{daySource.foodNote}</p>
           <h3>Food — {zodiac.sign.symbol} {zodiac.sign.name}</h3>
           <p>{zodiac.sign.foodNote}</p>
@@ -589,11 +875,12 @@ function BodyWisdomPanel({ day, zodiac }: { day: MoonDay; zodiac: ReturnType<typ
 
 const NOTIFICATION_TIME_KEY = "mondkalender.notificationTime";
 const NOTIFICATION_ON_KEY = "mondkalender.notificationsOn";
+const COORDS_KEY = "mondkalender.coords";
 
 function App() {
   const [selectedDate, setSelectedDate] = React.useState(() => new Date());
   const [now, setNow] = React.useState(() => new Date());
-  const [timeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [deviceTimeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [notificationTime, setNotificationTime] = React.useState(
     () => window.localStorage.getItem(NOTIFICATION_TIME_KEY) ?? "07:30"
   );
@@ -601,6 +888,30 @@ function App() {
     () => window.localStorage.getItem(NOTIFICATION_ON_KEY) === "true"
   );
   const [notificationStatus, setNotificationStatus] = React.useState<"idle" | "denied" | "unsupported">("idle");
+  const [coords, setCoords] = React.useState<Coords | null>(() => {
+    const saved = window.localStorage.getItem(COORDS_KEY);
+    return saved ? (JSON.parse(saved) as Coords) : null;
+  });
+  const [locationStatus, setLocationStatus] = React.useState<LocationStatus>("idle");
+
+  const handleEnableLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("unsupported");
+      return;
+    }
+
+    setLocationStatus("pending");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const next = { lat: position.coords.latitude, lon: position.coords.longitude };
+        setCoords(next);
+        window.localStorage.setItem(COORDS_KEY, JSON.stringify(next));
+        setLocationStatus("idle");
+      },
+      () => setLocationStatus("denied"),
+      { maximumAge: 6 * 60 * 60 * 1000, timeout: 10_000 }
+    );
+  };
 
   React.useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 1000);
@@ -668,13 +979,52 @@ function App() {
 
   const selectedMoment = isSameLocalDate(selectedDate, now) ? now : atHour(selectedDate, 12);
   const today = getMoonDay(selectedMoment);
-  const todaySource = getLunarSourceDay(today.lunarDayNumber);
-  const wakeDreamDay = getMoonDay(atHour(addDays(selectedDate, -1), 23));
-  const wakeDreamSource = getLunarSourceDay(wakeDreamDay.lunarDayNumber);
-  const tonightDreamDay = getMoonDay(atHour(selectedDate, 23));
-  const tonightDreamSource = getLunarSourceDay(tonightDreamDay.lunarDayNumber);
+  const wakeDreamMoment = atHour(addDays(selectedDate, -1), 23);
+  const tonightDreamMoment = atHour(selectedDate, 23);
   const moonZodiac = getMoonZodiac(today.date);
   const week = Array.from({ length: 7 }, (_, index) => getMoonDay(atHour(addDays(selectedDate, index - 2), 12)));
+
+  const dayKey = today.date.toDateString();
+  const tithiWindow = React.useMemo(
+    () => getTithiWindow(today.date, today.lunarDayNumber),
+    [dayKey, today.lunarDayNumber]
+  );
+  const zodiacWindow = React.useMemo(
+    () => getZodiacWindow(today.date, moonZodiac.signIndex),
+    [dayKey, moonZodiac.signIndex]
+  );
+
+  const observer = React.useMemo(() => (coords ? new Observer(coords.lat, coords.lon, 0) : null), [coords]);
+  // Once we know where the reader actually is, prefer that place's zone over the browser/OS
+  // zone — those diverge while traveling (e.g. a UK-configured laptop carried to Berlin),
+  // and every rise/set and window time below must be read in local wall-clock time to be
+  // meaningful.
+  const locationTimeZone = React.useMemo(() => {
+    if (!coords) return null;
+    try {
+      return tzLookup(coords.lat, coords.lon);
+    } catch {
+      return null;
+    }
+  }, [coords]);
+  const timeZone = locationTimeZone ?? deviceTimeZone;
+
+  const moonriseLadder = React.useMemo(
+    () => (observer ? buildMoonriseLadder(observer, today.date, 9) : null),
+    [observer, dayKey]
+  );
+
+  const civilLunarDay = getCivilLunarDay(selectedDate);
+  const symbolDay = getSymbolDay(today.date, moonriseLadder);
+  const wakeSymbolDay = getSymbolDay(wakeDreamMoment, moonriseLadder);
+  const tonightSymbolDay = getSymbolDay(tonightDreamMoment, moonriseLadder);
+  const weekSymbolDays = week.map((day) => getSymbolDay(day.date, moonriseLadder));
+
+  const todayMoonrise = moonriseLadder ? findLadderEntry(moonriseLadder, today.date) : undefined;
+  const todayMoonset =
+    observer && todayMoonrise ? SearchRiseSet(Body.Moon, observer, -1, todayMoonrise.start, 2) : null;
+  const todaySunrise = observer ? SearchRiseSet(Body.Sun, observer, 1, atHour(today.date, 0), 2) : null;
+  const todaySunset = observer ? SearchRiseSet(Body.Sun, observer, -1, atHour(today.date, 0), 2) : null;
 
   return (
     <main className="app-shell">
@@ -687,9 +1037,20 @@ function App() {
             <span>Mondkalender</span>
           </div>
           <div className="top-actions">
-            <div className="live-clock" aria-label={`Current browser time in ${timeZone}`}>
+            <div
+              className="live-clock"
+              aria-label={`Current time in ${timeZone}`}
+              title={
+                locationTimeZone && locationTimeZone !== deviceTimeZone
+                  ? `Using your location's time zone (device is set to ${deviceTimeZone})`
+                  : undefined
+              }
+            >
               <span>{formatClock(now, timeZone)}</span>
-              <small>{timeZone}</small>
+              <small className="live-clock-zone">
+                {timeZone}
+                {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
+              </small>
             </div>
             <button className="icon-button" aria-label="Open calendar">
               <CalendarDays size={19} />
@@ -722,10 +1083,48 @@ function App() {
             <div className="tithi-line">
               <span className="tithi-zodiac">{moonZodiac.sign.symbol} {moonZodiac.sign.name}</span>
               <span className="tithi-sep">·</span>
-              <span>{todaySource.emoji} Day {today.lunarDayNumber}</span>
+              <span title="Tithi — precise Moon-Sun angle">Tithi {today.lunarDayNumber} · {today.paksha}</span>
               <span className="tithi-sep">·</span>
-              <span>{today.paksha}</span>
+              <span title="OM Journal moon-day symbol, moonrise to moonrise">
+                {symbolDay.source.emoji} {symbolDay.source.symbol}
+              </span>
+              <span className="tithi-sep">·</span>
+              <span title="Lunar day number — civil count, resets at local midnight">
+                Moon day {civilLunarDay.number}
+              </span>
             </div>
+
+            {observer ? (
+              <>
+                <div className="rise-set-row">
+                  <span>
+                    <ArrowUpRight size={14} /> Moonrise {todayMoonrise ? formatTimeOnly(todayMoonrise.start, timeZone) : "—"}
+                  </span>
+                  <span>
+                    <ArrowDownRight size={14} /> Moonset {todayMoonset ? formatTimeOnly(todayMoonset.date, timeZone) : "—"}
+                  </span>
+                </div>
+                <div className="rise-set-row sun-row">
+                  <span>
+                    <Sunrise size={14} /> Sunrise {todaySunrise ? formatTimeOnly(todaySunrise.date, timeZone) : "—"}
+                  </span>
+                  <span>
+                    <Sunset size={14} /> Sunset {todaySunset ? formatTimeOnly(todaySunset.date, timeZone) : "—"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <button className="location-prompt hero-location-prompt" onClick={handleEnableLocation} disabled={locationStatus === "pending"}>
+                <MapPin size={14} />
+                {locationStatus === "pending"
+                  ? "Locating…"
+                  : locationStatus === "denied"
+                  ? "Location blocked — moon day symbol uses a calendar-day estimate"
+                  : locationStatus === "unsupported"
+                  ? "Location unavailable — moon day symbol uses a calendar-day estimate"
+                  : "Enable location for moonrise/moonset & exact moon-day symbol times"}
+              </button>
+            )}
 
             <h1>{today.headline}</h1>
             <p className="guidance">{today.guidance}</p>
@@ -740,10 +1139,12 @@ function App() {
       </section>
 
       <section className="content-grid">
-        <LunarDayClock day={today} />
-        <ZodiacGuidancePanel zodiac={moonZodiac} />
+        <TithiPanel day={today} window={tithiWindow} timeZone={timeZone} />
+        <ZodiacGuidancePanel zodiac={moonZodiac} window={zodiacWindow} timeZone={timeZone} />
 
-        <BodyWisdomPanel day={today} zodiac={moonZodiac} />
+        <SymbolPanel symbolDay={symbolDay} timeZone={timeZone} locationStatus={locationStatus} onEnableLocation={handleEnableLocation} />
+
+        <BodyWisdomPanel zodiac={moonZodiac} symbolDay={symbolDay} />
 
         <article className="panel dream-panel">
           <div className="panel-heading">
@@ -753,15 +1154,15 @@ function App() {
           <div className="dream-context">
             <span>Dream you woke with</span>
             <strong>
-              {wakeDreamSource.emoji} Day {wakeDreamDay.lunarDayNumber} · {wakeDreamSource.symbol}
+              {wakeSymbolDay.source.emoji} Day {wakeSymbolDay.number} · {wakeSymbolDay.source.symbol}
             </strong>
           </div>
-          <h3>{wakeDreamSource.dreamFocus}</h3>
-          <p>{wakeDreamSource.dreamGuidance}</p>
+          <h3>{wakeSymbolDay.source.dreamFocus}</h3>
+          <p>{wakeSymbolDay.source.dreamGuidance}</p>
           <div className="tonight-note">
             <span>Tonight</span>
             <strong>
-              {tonightDreamSource.emoji} Day {tonightDreamDay.lunarDayNumber} · {tonightDreamSource.dreamFocus}
+              {tonightSymbolDay.source.emoji} Day {tonightSymbolDay.number} · {tonightSymbolDay.source.dreamFocus}
             </strong>
           </div>
         </article>
@@ -773,23 +1174,6 @@ function App() {
           </div>
           <p>{today.ritual}</p>
           <blockquote>{today.affirmation}</blockquote>
-        </article>
-
-        <article className="panel symbol-panel">
-          <div className="panel-heading">
-            <BookOpen size={19} />
-            <h2>Symbol · {today.symbol}</h2>
-          </div>
-          <div className="symbol-lockup">
-            <span aria-hidden="true">{todaySource.emoji}</span>
-            <div>
-              <strong>{today.symbol}</strong>
-              <p>Lunar day {today.lunarDayNumber} symbol from the OM Journal tradition. Anchors the daily reflection and the dream reading.</p>
-            </div>
-          </div>
-          <a href={todaySource.sourceUrl} target="_blank" rel="noreferrer">
-            Source: OM Journal lunar day {today.lunarDayNumber} →
-          </a>
         </article>
 
         <article className="panel notification-panel">
@@ -828,7 +1212,7 @@ function App() {
         </article>
 
         <section className="week-strip" aria-label="Seven day moon outlook">
-          {week.map((day) => (
+          {week.map((day, index) => (
             <button
               className={`day-chip${day.date.toDateString() === selectedDate.toDateString() ? " active" : ""}`}
               key={day.date.toISOString()}
@@ -836,8 +1220,8 @@ function App() {
             >
               <span>{new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(day.date)}</span>
               <i style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
-              <strong>{getLunarSourceDay(day.lunarDayNumber).emoji}</strong>
-              <small>{day.lunarDayNumber}</small>
+              <strong>{weekSymbolDays[index].source.emoji}</strong>
+              <small>{weekSymbolDays[index].number}</small>
             </button>
           ))}
         </section>

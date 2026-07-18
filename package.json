@@ -15,10 +15,12 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typescript": "^5.7.2",
+    "tz-lookup": "^6.1.25",
     "vite": "^6.0.5"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "@types/tz-lookup": "^6.1.2"
   }
 }

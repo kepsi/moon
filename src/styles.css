@@ -108,6 +108,17 @@ p {
   font-size: 0.72rem;
 }
 
+.live-clock-zone {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+.live-clock-zone svg {
+  color: #c5eee8;
+}
+
 .brand-mark,
 .icon-button {
   justify-content: center;
@@ -259,7 +270,7 @@ p {
 .tithi-line {
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
   color: rgba(244, 239, 227, 0.7);
   font-size: 0.88rem;
   font-weight: 700;
@@ -271,6 +282,54 @@ p {
 
 .tithi-sep {
   color: rgba(244, 239, 227, 0.3);
+}
+
+.rise-set-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 6px;
+  color: rgba(244, 239, 227, 0.56);
+  font-size: 0.8rem;
+}
+
+.rise-set-row.sun-row {
+  margin-bottom: 18px;
+  color: rgba(244, 239, 227, 0.44);
+}
+
+.rise-set-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.location-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 7px 12px;
+  border: 1px dashed rgba(244, 239, 227, 0.26);
+  border-radius: 999px;
+  color: rgba(244, 239, 227, 0.66);
+  background: transparent;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.location-prompt:hover:not(:disabled) {
+  border-color: rgba(197, 238, 232, 0.5);
+  color: #c5eee8;
+}
+
+.location-prompt:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.hero-location-prompt {
+  max-width: 44ch;
 }
 
 h1 {
@@ -450,6 +509,81 @@ h1 {
   color: #fff7df;
   font-size: 1.4rem;
   line-height: 1;
+}
+
+/* ── Period range (calendar unit start/end times) ───── */
+
+.period-range {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.period-range.centered {
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.period-point {
+  display: grid;
+  gap: 3px;
+}
+
+.period-point.align-end {
+  text-align: right;
+  justify-items: end;
+}
+
+.period-point small {
+  color: rgba(244, 239, 227, 0.46);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.period-point strong {
+  color: #fff7df;
+  font-size: 0.84rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.period-arrow {
+  flex-shrink: 0;
+  color: rgba(244, 239, 227, 0.28);
+}
+
+.period-range.approximate .period-point strong {
+  color: rgba(244, 239, 227, 0.72);
+}
+
+.period-range.approximate .period-point small {
+  color: rgba(216, 168, 94, 0.66);
+}
+
+.symbol-wheel-panel .location-prompt {
+  display: flex;
+  width: fit-content;
+  margin: 6px auto 0;
+}
+
+.symbol-wheel-panel p {
+  margin-top: 14px;
+}
+
+.symbol-wheel-panel a {
+  display: inline-flex;
+  color: #e7d59b;
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+
+.symbol-wheel-panel a:hover {
+  text-decoration: underline;
 }
 
 /* ── Zodiac guidance panel ──────────────────────────── */
