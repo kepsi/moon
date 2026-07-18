@@ -10,6 +10,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Eye,
   MapPin,
   Moon,
@@ -47,8 +49,9 @@ type LocationStatus = "idle" | "pending" | "denied" | "unsupported";
 
 type LadderEntry = { number: number; start: Date; end: Date };
 
-// The lunar day carried by the OM Journal symbols: moonrise-to-moonrise when we
-// know the reader's location, otherwise a calendar-day (local midnight) estimate.
+// The lunar day carried by the Vronsky Lunar Days symbols (sourced via OM Journal):
+// moonrise-to-moonrise when we know the reader's location, otherwise a calendar-day
+// (local midnight) estimate.
 type SymbolDay = {
   number: number;
   start: Date;
@@ -221,8 +224,15 @@ const zodiacSigns: ZodiacSign[] = [
 const tithiNames = [
   "Pratipada", "Dvitiya", "Tritiya", "Chaturthi", "Panchami",
   "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
-  "Ekadashi", "Dvadashi", "Trayodashi", "Chaturdashi", "Purnima / Amavasya"
+  "Ekadashi", "Dvadashi", "Trayodashi", "Chaturdashi"
 ];
+
+// The 15th tithi is named for which fortnight it closes: Purnima (full moon) in Shukla
+// Paksha, Amavasya (new moon) in Krishna Paksha — never a generic "15th tithi".
+function getTithiName(tithiNumber: number, paksha: "Shukla" | "Krishna") {
+  if (tithiNumber === 15) return paksha === "Shukla" ? "Purnima" : "Amavasya";
+  return tithiNames[tithiNumber - 1];
+}
 
 const dayWisdom = [
   {
@@ -464,7 +474,7 @@ function getMoonDay(date: Date): MoonDay {
     phasePercent: Math.round(illumination * 100),
     lunarDayNumber,
     tithiNumber,
-    tithiName: tithiNames[tithiNumber - 1],
+    tithiName: getTithiName(tithiNumber, paksha),
     paksha,
     ...wisdom
   };
@@ -477,6 +487,7 @@ function getCivilLunarDay(date: Date) {
   const anchor = getMoonDay(atHour(date, 0));
   return {
     number: anchor.lunarDayNumber,
+    tithiName: anchor.tithiName,
     start: atHour(date, 0),
     end: atHour(addDays(date, 1), 0)
   };
@@ -518,7 +529,7 @@ function findLadderEntry(ladder: LadderEntry[], date: Date) {
   return ladder.find((entry) => date >= entry.start && date < entry.end);
 }
 
-// Resolves the OM Journal "symbol day" for a moment: moonrise-to-moonrise when we have the
+// Resolves the Vronsky Lunar Days "symbol day" for a moment: moonrise-to-moonrise when we have the
 // reader's coordinates and a ladder covering that moment, otherwise the civil-day estimate.
 function getSymbolDay(date: Date, ladder: LadderEntry[] | null): SymbolDay {
   const entry = ladder ? findLadderEntry(ladder, date) : undefined;
@@ -651,16 +662,22 @@ function PeriodRange({
 function MoonZodiacHero({
   day,
   zodiac,
-  symbolDay
+  symbolDay,
+  nextNewMoon,
+  nextFullMoon,
+  timeZone
 }: {
   day: MoonDay;
   zodiac: ReturnType<typeof getMoonZodiac>;
   symbolDay: SymbolDay;
+  nextNewMoon: Date | null;
+  nextFullMoon: Date | null;
+  timeZone: string;
 }) {
   return (
     <div
       className="moon-zodiac-hero"
-      aria-label={`${day.phaseName}, ${day.phasePercent}% illuminated, Tithi ${day.lunarDayNumber}, Moon in ${zodiac.sign.name}, moon day symbol ${symbolDay.source.symbol}`}
+      aria-label={`${day.phaseName}, ${day.phasePercent}% illuminated, Tithi ${day.tithiNumber} (${day.paksha}), Moon in ${zodiac.sign.name}, Vronsky lunar day symbol ${symbolDay.source.symbol}`}
     >
       <span className="hero-tick-ring zodiac-ring-ticks" aria-hidden="true" />
       <span className="hero-tick-ring tithi-ring" aria-hidden="true" />
@@ -679,13 +696,34 @@ function MoonZodiacHero({
 
       <div className="hero-tithi-pointer" style={pointerStyle(day.phaseAngle)} />
 
-      <span
-        className="hero-tithi-glyph"
-        style={wheelLabelStyle(day.lunarDayNumber - 1, 30, 24, 6)}
-        title={`Tithi ${day.lunarDayNumber}: ${day.tithiName}`}
-      >
-        {day.lunarDayNumber}
-      </span>
+      {day.tithiName === "Amavasya" ? (
+        // New Moon is the boundary shared by Amavasya (ending) and Pratipada (starting) —
+        // a seam, not a slot — so its marker sits exactly at bearing 0 (12 o'clock) rather
+        // than at a slot-center offset, replacing the plain tithi number for this one day.
+        <span
+          className="hero-syzygy-marker new-moon"
+          style={wheelLabelStyle(0, 1, 24, 0)}
+          title={nextNewMoon ? `New Moon — ${formatPeriodMoment(nextNewMoon, timeZone)}` : "New Moon"}
+        >
+          ● {nextNewMoon ? formatTimeOnly(nextNewMoon, timeZone) : ""}
+        </span>
+      ) : day.tithiName === "Purnima" ? (
+        <span
+          className="hero-syzygy-marker full-moon"
+          style={wheelLabelStyle(0, 1, 24, 180)}
+          title={nextFullMoon ? `Full Moon — ${formatPeriodMoment(nextFullMoon, timeZone)}` : "Full Moon"}
+        >
+          ○ {nextFullMoon ? formatTimeOnly(nextFullMoon, timeZone) : ""}
+        </span>
+      ) : (
+        <span
+          className="hero-tithi-glyph"
+          style={wheelLabelStyle(day.lunarDayNumber - 1, 30, 24, 6)}
+          title={`Tithi ${day.tithiNumber} (${day.paksha}): ${day.tithiName}`}
+        >
+          {day.tithiNumber}
+        </span>
+      )}
 
       {zodiacSigns.map((sign, index) => (
         <span
@@ -722,11 +760,11 @@ function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: 
     <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <Orbit size={19} />
-        <h2>Tithi {day.lunarDayNumber} · {day.tithiName}</h2>
+        <h2>Tithi {day.tithiNumber} · {day.tithiName}</h2>
       </div>
 
       <div className="zodiac-guide-header">
-        <span className="zodiac-symbol-large">{day.lunarDayNumber}</span>
+        <span className="zodiac-symbol-large">{day.tithiNumber}</span>
         <div>
           <div className="zodiac-meta">
             <span>{day.paksha}</span>
@@ -803,10 +841,10 @@ function ZodiacGuidancePanel({
   );
 }
 
-// Symbol panel — the OM Journal moon-day archetype, moonrise-to-moonrise. The wheel visual
-// now lives combined into the hero dial; this panel carries the fuller OM Journal reference
-// content (tagline, overview, stones, meditation, relationships) alongside the existing
-// do/avoid and dream fields.
+// Symbol panel — the Vronsky Lunar Days archetype (sourced via OM Journal), moonrise-to-
+// moonrise. The wheel visual now lives combined into the hero dial; this panel carries the
+// fuller reference content (tagline, overview, stones, meditation, relationships) alongside
+// the existing do/avoid and dream fields.
 function SymbolPanel({
   symbolDay,
   timeZone,
@@ -824,7 +862,7 @@ function SymbolPanel({
     <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <BookOpen size={19} />
-        <h2>Moon Day Symbol · {source.symbol}</h2>
+        <h2>Lunar Day Symbol · {source.symbol}</h2>
       </div>
 
       <div className="zodiac-guide-header">
@@ -891,7 +929,7 @@ function SymbolPanel({
       </div>
 
       <a href={source.sourceUrl} target="_blank" rel="noreferrer">
-        Source: OM Journal moon day {symbolDay.number} →
+        Source: Vronsky Lunar Days, day {symbolDay.number} — via OM Journal →
       </a>
     </article>
   );
@@ -945,6 +983,120 @@ function BodyWisdomPanel({ zodiac, symbolDay }: { zodiac: ReturnType<typeof getM
         </div>
       </div>
     </article>
+  );
+}
+
+const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+// The topbar's calendar button: a small month-grid popover for jumping straight to any date,
+// instead of paging through the hero's prev/next-day arrows one day at a time.
+function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; onSelectDate: (date: Date) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const [viewMonth, setViewMonth] = React.useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handlePointer = (event: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  const handleToggle = () => {
+    setViewMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+    setOpen((value) => !value);
+  };
+
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (Date | null)[] = [
+    ...Array.from({ length: firstWeekday }, (): Date | null => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => new Date(year, month, index + 1))
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const today = new Date();
+
+  return (
+    <div className="calendar-button-wrap" ref={wrapRef}>
+      <button className="icon-button calendar-button" aria-label="Open calendar" aria-expanded={open} onClick={handleToggle}>
+        <CalendarDays size={19} />
+      </button>
+
+      {open ? (
+        <div className="calendar-popover">
+          <div className="calendar-popover-header">
+            <div className="calendar-nav-group">
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year - 1, month, 1))} aria-label="Previous year">
+                <ChevronsLeft size={15} />
+              </button>
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year, month - 1, 1))} aria-label="Previous month">
+                <ChevronLeft size={15} />
+              </button>
+            </div>
+            <span>{viewMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</span>
+            <div className="calendar-nav-group">
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year, month + 1, 1))} aria-label="Next month">
+                <ChevronRight size={15} />
+              </button>
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year + 1, month, 1))} aria-label="Next year">
+                <ChevronsRight size={15} />
+              </button>
+            </div>
+          </div>
+
+          <div className="calendar-popover-weekdays">
+            {WEEKDAY_LABELS.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+
+          <div className="calendar-popover-grid">
+            {cells.map((date, index) =>
+              date ? (
+                <button
+                  key={date.toISOString()}
+                  className={`calendar-day${isSameLocalDate(date, selectedDate) ? " selected" : ""}${
+                    isSameLocalDate(date, today) ? " today" : ""
+                  }`}
+                  onClick={() => {
+                    onSelectDate(date);
+                    setOpen(false);
+                  }}
+                >
+                  {date.getDate()}
+                </button>
+              ) : (
+                <span key={index} />
+              )
+            )}
+          </div>
+
+          <button
+            className="calendar-popover-today"
+            onClick={() => {
+              onSelectDate(new Date());
+              setOpen(false);
+            }}
+          >
+            Jump to today
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -1101,6 +1253,13 @@ function App() {
   const todaySunrise = observer ? SearchRiseSet(Body.Sun, observer, 1, atHour(today.date, 0), 2) : null;
   const todaySunset = observer ? SearchRiseSet(Body.Sun, observer, -1, atHour(today.date, 0), 2) : null;
 
+  // Exact instants of syzygy (phase angle 0/180), independent of location — always shown.
+  // Search from yesterday's midnight, not "now": searching from "now" would skip today's own
+  // syzygy once it's already passed today and jump straight to next month's instead.
+  const syzygySearchAnchor = atHour(addDays(today.date, -1), 0);
+  const nextNewMoon = SearchMoonPhase(0, syzygySearchAnchor, 40);
+  const nextFullMoon = SearchMoonPhase(180, syzygySearchAnchor, 40);
+
   return (
     <main className="app-shell">
       <section className="hero-panel">
@@ -1127,14 +1286,19 @@ function App() {
                 {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
               </small>
             </div>
-            <button className="icon-button" aria-label="Open calendar">
-              <CalendarDays size={19} />
-            </button>
+            <CalendarButton selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           </div>
         </nav>
 
         <div className="hero-grid">
-          <MoonZodiacHero day={today} zodiac={moonZodiac} symbolDay={symbolDay} />
+          <MoonZodiacHero
+            day={today}
+            zodiac={moonZodiac}
+            symbolDay={symbolDay}
+            nextNewMoon={nextNewMoon ? nextNewMoon.date : null}
+            nextFullMoon={nextFullMoon ? nextFullMoon.date : null}
+            timeZone={timeZone}
+          />
 
           <article className="daily-reading">
             <div className="date-row">
@@ -1156,16 +1320,22 @@ function App() {
             </div>
 
             <div className="tithi-line">
-              <span className="tithi-zodiac">{moonZodiac.sign.symbol} {moonZodiac.sign.name}</span>
-              <span className="tithi-sep">·</span>
-              <span title="Tithi — precise Moon-Sun angle">Tithi {today.lunarDayNumber} · {today.paksha}</span>
-              <span className="tithi-sep">·</span>
-              <span title="OM Journal moon-day symbol, moonrise to moonrise">
-                {symbolDay.source.emoji} {symbolDay.source.symbol}
-              </span>
-              <span className="tithi-sep">·</span>
               <span title="Lunar day number — civil count, resets at local midnight">
-                Moon day {civilLunarDay.number}
+                {civilLunarDay.tithiName === "Purnima"
+                  ? "Full Moon"
+                  : civilLunarDay.tithiName === "Amavasya"
+                  ? "New Moon"
+                  : `Lunar Day ${civilLunarDay.number}`}
+              </span>
+              <span className="tithi-sep" aria-hidden="true">–</span>
+              <span title="Zodiac — Moon sign, 30° ecliptic longitude">Moon in {moonZodiac.sign.name}</span>
+              <span className="tithi-sep" aria-hidden="true">–</span>
+              <span title="Vronsky Lunar Days symbol, moonrise to moonrise">{symbolDay.source.symbol}</span>
+              <span className="tithi-sep" aria-hidden="true">–</span>
+              <span title="Tithi — precise Moon-Sun angle">
+                {today.tithiName === "Purnima" || today.tithiName === "Amavasya"
+                  ? today.tithiName
+                  : `Tithi ${today.tithiNumber} · ${today.paksha}`}
               </span>
             </div>
 
@@ -1213,12 +1383,13 @@ function App() {
         </div>
       </section>
 
-      <section className="content-grid">
-        <TithiPanel day={today} window={tithiWindow} timeZone={timeZone} />
+      <section className="calendar-trio">
         <ZodiacGuidancePanel zodiac={moonZodiac} window={zodiacWindow} timeZone={timeZone} />
-
         <SymbolPanel symbolDay={symbolDay} timeZone={timeZone} locationStatus={locationStatus} onEnableLocation={handleEnableLocation} />
+        <TithiPanel day={today} window={tithiWindow} timeZone={timeZone} />
+      </section>
 
+      <section className="content-grid">
         <BodyWisdomPanel zodiac={moonZodiac} symbolDay={symbolDay} />
 
         <article className="panel dream-panel">
