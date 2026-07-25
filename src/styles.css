@@ -676,7 +676,6 @@ h1 {
   font-size: 0.84rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .period-arrow {
@@ -1091,6 +1090,21 @@ blockquote {
 
   .topbar {
     padding: 14px 16px;
+  }
+
+  /* Non-functional wordmark — shrink it first so the clock/calendar controls keep their
+     room and the topbar doesn't wrap to a second line on narrow phones. */
+  .brand-name {
+    font-size: 0.8rem;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand {
+    gap: 7px;
   }
 
   .top-actions {

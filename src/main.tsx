@@ -1435,7 +1435,7 @@ function App() {
             <span className="brand-mark">
               <Moon size={18} strokeWidth={2.3} />
             </span>
-            <span>Mondkalender</span>
+            <span className="brand-name">Mondkalender</span>
           </div>
           <div className="top-actions">
             <div
