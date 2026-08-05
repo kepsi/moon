@@ -1204,11 +1204,20 @@ function App() {
       </section>
 
       <section className="content-grid">
-        <BodyWisdomPanel day={today} zodiac={moonZodiac} symbolDay={symbolDay} />
-
-        <RelationshipsPanel zodiac={moonZodiac} symbolDay={symbolDay} />
-
-        <BusinessHouseworkGardenPanel zodiac={moonZodiac} symbolDay={symbolDay} />
+        <section className="week-strip" aria-label={t("weekOutlookAria", language)}>
+          {week.map((day, index) => (
+            <button
+              className={`day-chip${day.date.toDateString() === selectedDate.toDateString() ? " active" : ""}`}
+              key={day.date.toISOString()}
+              onClick={() => setSelectedDate(day.date)}
+            >
+              <span>{new Intl.DateTimeFormat(DATE_LOCALE[language], { weekday: "short" }).format(day.date)}</span>
+              <i style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
+              <strong>{weekSymbolDays[index].source.emoji}</strong>
+              <small>{weekSymbolDays[index].number}</small>
+            </button>
+          ))}
+        </section>
 
         <article className="panel dream-panel">
           <div className="panel-heading">
@@ -1265,20 +1274,11 @@ function App() {
           <blockquote>{symbolDay.source.tagline}</blockquote>
         </article>
 
-        <section className="week-strip" aria-label={t("weekOutlookAria", language)}>
-          {week.map((day, index) => (
-            <button
-              className={`day-chip${day.date.toDateString() === selectedDate.toDateString() ? " active" : ""}`}
-              key={day.date.toISOString()}
-              onClick={() => setSelectedDate(day.date)}
-            >
-              <span>{new Intl.DateTimeFormat(DATE_LOCALE[language], { weekday: "short" }).format(day.date)}</span>
-              <i style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
-              <strong>{weekSymbolDays[index].source.emoji}</strong>
-              <small>{weekSymbolDays[index].number}</small>
-            </button>
-          ))}
-        </section>
+        <BodyWisdomPanel day={today} zodiac={moonZodiac} symbolDay={symbolDay} />
+
+        <RelationshipsPanel zodiac={moonZodiac} symbolDay={symbolDay} />
+
+        <BusinessHouseworkGardenPanel zodiac={moonZodiac} symbolDay={symbolDay} />        
 
         <section className="support-cta" id="support-cta">
           <p>{t("supportCtaText", language)}</p>
