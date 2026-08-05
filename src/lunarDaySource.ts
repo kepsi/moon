@@ -17,6 +17,9 @@ export type LunarSourceDay = {
   foodAvoid: string[];
   dreamFocus: string;
   dreamGuidance: string;
+  dreamTiming: string;
+  dreamTip: string;
+  dreamRemedy?: string;
   sourceUrl: string;
 };
 
@@ -40,6 +43,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Spicy foods", "Fatty foods", "Alcohol", "Coffee and tea"],
     dreamFocus: "Month-ahead sketches",
     dreamGuidance: "Dreams can sketch the coming lunar month. Notice desires, plans, and constructive images; include the useful ones in your new-moon intentions.",
+    dreamTiming: "Bad dreams are rare tonight — read this one as a rough sketch of the month ahead, not a fixed forecast.",
+    dreamTip: "Note anything that felt like a plan or a beginning — the useful pieces are worth folding into this month's intentions.",
     sourceUrl: "https://om-journal.com/moonday/1"
   },
   {
@@ -61,6 +66,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Going hungry"],
     dreamFocus: "Karmic blueprint",
     dreamGuidance: "Dreams may point toward recurring life tasks or karmic knots. Treat difficult images calmly; they can show what wants attention this month.",
+    dreamTiming: "These dreams work more like a blueprint for the month than a literal prediction — an unpleasant or empty one isn't worth much weight.",
+    dreamTip: "A recurring or oddly familiar dream may be pointing at an old pattern that's finally ready to resolve.",
     sourceUrl: "https://om-journal.com/moonday/2"
   },
   {
@@ -82,6 +89,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Overeating", "Heavy meals"],
     dreamFocus: "Energy and courage",
     dreamGuidance: "Dreams can reveal how your energy is moving. Struggle, resistance, or victory imagery is useful for reading your inner strength.",
+    dreamTiming: "Dreams rarely come true on this lunar day, but they're still worth reading for what they show about you.",
+    dreamTip: "Notice how you're spending energy in the dream — it usually mirrors where your real strength is going, well or badly.",
     sourceUrl: "https://om-journal.com/moonday/3"
   },
   {
@@ -103,6 +112,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Excess or overindulgence"],
     dreamFocus: "Warnings and inherited patterns",
     dreamGuidance: "Dreams may come true, especially vivid ones. Tangled images ask you to revise plans; relatives can point to inherited patterns ready for care.",
+    dreamTiming: "Dreams can come true today, especially the ones with real color in them.",
+    dreamTip: "Tangled, confusing imagery is a nudge to revisit a plan; a family member appearing often points to an inherited pattern worth attention.",
     sourceUrl: "https://om-journal.com/moonday/4"
   },
   {
@@ -124,6 +135,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Meat", "Nuts", "Fermented foods", "Grains and seeds", "Alcohol"],
     dreamFocus: "Health and movement",
     dreamGuidance: "Good dreams are promising, while disturbing ones ask for health and energy care. Roads, movement, and even crying can be positive signs.",
+    dreamTiming: "Good dreams may come true; unsettling ones are a caution to notice, not a verdict to fear.",
+    dreamTip: "Crying in a dream is considered a good sign today, and an open road or path usually reflects real progress.",
     sourceUrl: "https://om-journal.com/moonday/5"
   },
   {
@@ -145,6 +158,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Heavy foods"],
     dreamFocus: "Private revelation",
     dreamGuidance: "Dreams can carry answers, but are best kept private. Ask a clear question before sleep and write down the images immediately on waking.",
+    dreamTiming: "These dreams may come true — but the tradition says only if you keep them to yourself.",
+    dreamTip: "Watch for anything left undone in the dream; it often points to a task still waiting for you in waking life.",
     sourceUrl: "https://om-journal.com/moonday/6"
   },
   {
@@ -166,6 +181,9 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Words and purpose",
     dreamGuidance: "Pay special attention to spoken words in dreams. They may carry useful guidance about your direction, though fulfillment may take time.",
+    dreamTiming: "Dreams tonight can carry genuinely useful information, not just noise.",
+    dreamTip: "Pay close attention to any words spoken in the dream — today the subconscious tends to talk in language, not just imagery.",
+    dreamRemedy: "If a dream unsettles you, try quietly telling it to running water, a tap or a stream, as a way to let the feeling go.",
     sourceUrl: "https://om-journal.com/moonday/7"
   },
   {
@@ -187,6 +205,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Stimulants", "Alcohol"],
     dreamFocus: "Transformation",
     dreamGuidance: "Dreams may show unrealized gifts, old unfinished problems, or your readiness for change. Open spaces suggest movement; dead ends ask for renewal.",
+    dreamTiming: "Tonight's dreams tend to show you exactly where you're ready to change.",
+    dreamTip: "Open, spacious settings in the dream suggest real movement forward; cramped or blocked ones point to where you still feel stuck.",
     sourceUrl: "https://om-journal.com/moonday/8"
   },
   {
@@ -208,6 +228,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Salt", "Alcohol"],
     dreamFocus: "Hidden conflict",
     dreamGuidance: "Dreams may be intense or unpleasant because hidden conflicts are surfacing. Extract the lesson, then let the heavy images go.",
+    dreamTiming: "These dreams can stir up real unease — try not to read too much into the specific images.",
+    dreamTip: "If a dream feels like a warning, treat it as pointing at a tension worth naming, not a prediction to brace for.",
     sourceUrl: "https://om-journal.com/moonday/9"
   },
   {
@@ -229,6 +251,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Family line",
     dreamGuidance: "Dreams can carry family, ancestry, or lineage themes. Bright dreams may be light and symbolic; disturbing dreams should be acknowledged and released.",
+    dreamTiming: "Family members and ancestors often show up in dreams tonight.",
+    dreamTip: "A relative or ancestor appearing is usually offering support or insight into your own path, more than a literal message about them.",
     sourceUrl: "https://om-journal.com/moonday/10"
   },
   {
@@ -250,6 +274,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Meat", "Stimulants"],
     dreamFocus: "Material and spiritual balance",
     dreamGuidance: "Dreams can show whether your material life and spiritual life are moving together. Your role in the dream is the main clue.",
+    dreamTiming: "A meaningful dream tonight may show up in real life within about three days.",
+    dreamTip: "Notice whether the dream leans more toward the material world or the spiritual one — that balance is the real message.",
     sourceUrl: "https://om-journal.com/moonday/11"
   },
   {
@@ -271,6 +297,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Excess saturated fats"],
     dreamFocus: "Values",
     dreamGuidance: "Dreams can reveal whether material or spiritual values are dominating. Bright, well-remembered dreams deserve attention.",
+    dreamTiming: "A good dream tonight may show up in real life within about a week.",
+    dreamTip: "Whatever, or whoever, matters most in the dream is usually a fair read on what you actually value right now.",
     sourceUrl: "https://om-journal.com/moonday/12"
   },
   {
@@ -292,6 +320,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Excess"],
     dreamFocus: "Breaking loops",
     dreamGuidance: "Dreams may show where you are repeating a loop and where change is possible. Record them quickly; warnings may unfold soon.",
+    dreamTiming: "A dream tonight can act as a warning, and may play out within about eight days.",
+    dreamTip: "Write it down the moment you wake — this is a night where the meaning fades fast once the day gets moving.",
     sourceUrl: "https://om-journal.com/moonday/13"
   },
   {
@@ -313,6 +343,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Hidden abilities",
     dreamGuidance: "Dreams are usually not predictive today, but they may reveal abilities that deserve development. Heavy dreams can be released lightly.",
+    dreamTiming: "Dreams tonight rarely mean much on their own.",
+    dreamTip: "If something unsettling shows up, let it go — it's more likely pointing at an undeveloped talent than a real warning.",
     sourceUrl: "https://om-journal.com/moonday/14"
   },
   {
@@ -334,6 +366,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Alcohol", "Heavy fats"],
     dreamFocus: "Subconscious weather",
     dreamGuidance: "Dreams mirror your current inner state. Bright dreams may be prophetic if kept private; heavy dreams point to imbalance and the next cycle's work.",
+    dreamTiming: "Tonight's dream tends to mirror your current emotional state more than predict the future.",
+    dreamTip: "A good dream is more likely to hold if you keep it to yourself; a heavy one is just showing you where this month's energy needs balancing.",
     sourceUrl: "https://om-journal.com/moonday/15"
   },
   {
@@ -355,6 +389,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Heavy foods"],
     dreamFocus: "Cleansing and balance",
     dreamGuidance: "Dreams help release tension and restore balance. Nightmares can be read as the psyche clearing old pressure rather than as bad omens.",
+    dreamTiming: "Dreams tonight work fast, often easing real tension within about a day.",
+    dreamTip: "A nightmare tonight is best read as your mind clearing something out, not as a bad sign.",
     sourceUrl: "https://om-journal.com/moonday/16"
   },
   {
@@ -376,6 +412,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Creative life force",
     dreamGuidance: "Dreams reflect sexual and creative energy. Pleasant dreams suggest flow; unpleasant ones ask where vitality has been suppressed.",
+    dreamTiming: "A dream tonight may show up in real life within about three days.",
+    dreamTip: "Pleasant imagery suggests your creative and physical energy are flowing well; unsettling imagery points to where it's being held back.",
     sourceUrl: "https://om-journal.com/moonday/17"
   },
   {
@@ -397,6 +435,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Overeating"],
     dreamFocus: "Self-reflection",
     dreamGuidance: "Dreams mirror the gap between who you are living as and who you want to become. They may also show blocks, health hints, or practical openings.",
+    dreamTiming: "Dreams tonight are worth writing down and comparing with how your day actually unfolds.",
+    dreamTip: "The gap between the dream and reality is often the real message — a good dream tends to point toward a genuinely good outcome.",
     sourceUrl: "https://om-journal.com/moonday/18"
   },
   {
@@ -418,6 +458,9 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Heavy foods", "Processed foods"],
     dreamFocus: "Deep psyche",
     dreamGuidance: "Dreams may be difficult and should not be interpreted too literally. Use prayer, release, or outside support if the imagery feels heavy.",
+    dreamTiming: "This is a difficult night for dreams — best not to take the images too literally.",
+    dreamTip: "If something disturbing surfaces, a quiet moment of release works better than trying to decode it alone.",
+    dreamRemedy: "For a genuinely heavy dream, it's worth talking it through with someone rather than sitting with it by yourself.",
     sourceUrl: "https://om-journal.com/moonday/19"
   },
   {
@@ -439,6 +482,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Alcohol"],
     dreamFocus: "Requested answers",
     dreamGuidance: "Dreams can come true quickly and may be intentionally requested. Ask for a solution, a place, or a subtle-world journey before sleep.",
+    dreamTiming: "Dreams tonight can come true quickly.",
+    dreamTip: "This is a good night to actually ask for something in return, a solution, a way through a problem, or simply clarity.",
     sourceUrl: "https://om-journal.com/moonday/20"
   },
   {
@@ -460,6 +505,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Creative power",
     dreamGuidance: "Dreams mainly show whether creative energy is present or blocked. Beyond that, they are usually less important and rarely predictive.",
+    dreamTiming: "Dreams tonight rarely play out literally.",
+    dreamTip: "Read this one as a gauge of your creative energy right now rather than a forecast of what's coming.",
     sourceUrl: "https://om-journal.com/moonday/21"
   },
   {
@@ -481,6 +528,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Processed foods"],
     dreamFocus: "Knowledge",
     dreamGuidance: "Dreams may be empty, or they may bring knowledge and problem-solving. Ask a question before bed and write down what arrives.",
+    dreamTiming: "Tonight's dreams range from forgettable to genuinely revealing.",
+    dreamTip: "If you set an intention before bed, pay close attention on waking — this is a night that can hand you a real answer.",
     sourceUrl: "https://om-journal.com/moonday/22"
   },
   {
@@ -502,6 +551,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Salt", "Processed foods"],
     dreamFocus: "Contradiction",
     dreamGuidance: "Dreams can be deceptive or reversed today. Treat strong conclusions carefully; the opposite meaning may be closer to the truth.",
+    dreamTiming: "Dreams tonight tend to run backward from what they seem to say.",
+    dreamTip: "A dream that feels alarming is more often pointing at an inner conflict than an actual threat — try reading it in reverse.",
     sourceUrl: "https://om-journal.com/moonday/23"
   },
   {
@@ -523,6 +574,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Intoxicants"],
     dreamFocus: "Inner strength",
     dreamGuidance: "Dreams show creative force, sexual energy, and overall potential. Good dreams suggest strength; difficult ones reveal where energy leaks.",
+    dreamTiming: "Dreams tonight reflect your creative and physical energy directly.",
+    dreamTip: "An unsettling dream usually signals depleted energy or something unresolved that needs real recovery, not more pushing.",
     sourceUrl: "https://om-journal.com/moonday/24"
   },
   {
@@ -544,6 +597,9 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Intuitive prophecy",
     dreamGuidance: "Dreams are traditionally treated as prophetic today, but intuition matters more than literal analysis. Cleanse and release nightmares in the morning.",
+    dreamTiming: "Considered one of the most genuinely prophetic nights of the month.",
+    dreamTip: "Trust your gut reaction to the dream over a literal, symbol-by-symbol reading of it.",
+    dreamRemedy: "For a nightmare, a quiet moment of reflection and washing your face in cool water is the traditional way to start the day clear.",
     sourceUrl: "https://om-journal.com/moonday/25"
   },
   {
@@ -565,6 +621,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Fermented foods", "Intoxicants"],
     dreamFocus: "Habits and pride",
     dreamGuidance: "Dreams can reveal habits, vices, pride, or self-esteem distortions. Colorful dreams may lift the mood and can come true.",
+    dreamTiming: "Dreams tonight tend to expose habits more than predict events.",
+    dreamTip: "Whatever flaw or bad habit shows up is worth a second look — it's rarely random tonight.",
     sourceUrl: "https://om-journal.com/moonday/26"
   },
   {
@@ -586,6 +644,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Potatoes", "Citrus", "Alcohol"],
     dreamFocus: "True nature",
     dreamGuidance: "Dreams and omens can carry intuitive knowledge and reveal the true nature of people or situations. Interpret gently; mistakes are easy today.",
+    dreamTiming: "Dreams and omens can genuinely come true tonight.",
+    dreamTip: "You may get real intuitive insight about a person or situation — but it's also easy to misread the signal, so hold your interpretation loosely.",
     sourceUrl: "https://om-journal.com/moonday/27"
   },
   {
@@ -607,6 +667,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Obstacles and love",
     dreamGuidance: "Dreams may show obstacles, solutions, future hints, and the emotional field of love. Treat them as notices shaped by your choices.",
+    dreamTiming: "Dreams tonight can be prophetic, especially about relationships.",
+    dreamTip: "Obstacles shown in the dream often come with a hint at how to move through them; old, past-feeling imagery is worth noting too.",
     sourceUrl: "https://om-journal.com/moonday/28"
   },
   {
@@ -628,6 +690,9 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: ["Heavy meals"],
     dreamFocus: "Difficult clearing",
     dreamGuidance: "Dreams may be complicated or frightening because subconscious negativity is clearing. Keep the day harmonious and seek support for heavy material.",
+    dreamTiming: "Dreams tonight can run complicated, unpleasant, or frightening — that's usually accumulated tension surfacing, not a bad omen.",
+    dreamTip: "If a dream from tonight stays with you, it's worth unpacking with someone rather than sitting with it alone.",
+    dreamRemedy: "Clearing your space with candlelight before bed tonight can soften whatever surfaces.",
     sourceUrl: "https://om-journal.com/moonday/29"
   },
   {
@@ -649,6 +714,8 @@ export const lunarDaySource: LunarSourceDay[] = [
     foodAvoid: [],
     dreamFocus: "Cycle completion",
     dreamGuidance: "Dreams may be bright and meaningful, especially if you have worked with the month consciously. Record what closes and what asks for attention next.",
+    dreamTiming: "Not every lunar month reaches this day, so a dream tonight carries a little extra weight.",
+    dreamTip: "Bright, memorable dreams tonight are worth honoring as a genuine close to the month, especially if you've worked with it consciously.",
     sourceUrl: "https://om-journal.com/moonday/30"
   }
 ];

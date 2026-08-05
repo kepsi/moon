@@ -70,8 +70,7 @@ p {
 .icon-button,
 .top-actions,
 .panel-heading,
-.tithi-line,
-.notification-preview {
+.tithi-line {
   display: flex;
   align-items: center;
 }
@@ -82,6 +81,12 @@ p {
 }
 
 .top-actions {
+  gap: 10px;
+}
+
+.clock-row {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -616,7 +621,8 @@ h1 {
 }
 
 .panel,
-.week-strip {
+.week-strip,
+.support-cta {
   border: 1px solid rgba(244, 239, 227, 0.11);
   border-radius: 10px;
   background: rgba(244, 239, 227, 0.065);
@@ -917,8 +923,7 @@ h1 {
 
 /* ── Dream panel ────────────────────────────────────── */
 
-.dream-context,
-.tonight-note {
+.dream-context {
   display: grid;
   gap: 4px;
   padding: 12px;
@@ -926,17 +931,51 @@ h1 {
   background: rgba(16, 20, 24, 0.32);
 }
 
-.dream-context span,
-.tonight-note span {
+.dream-context span {
   color: rgba(244, 239, 227, 0.58);
   font-size: 0.82rem;
 }
 
-.dream-context strong,
-.tonight-note strong {
+.dream-context strong {
   display: block;
   color: #fff7df;
   font-size: 0.95rem;
+}
+
+.dream-context-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dream-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dream-toggle small {
+  color: rgba(244, 239, 227, 0.46);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.dream-toggle .icon-button {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.dream-toggle .icon-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.dream-window {
+  color: rgba(244, 239, 227, 0.42);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .dream-panel h3 {
@@ -951,9 +990,8 @@ h1 {
   font-size: 0.92rem;
 }
 
-.tonight-note {
-  margin-top: 14px;
-  border: 1px solid rgba(87, 139, 136, 0.24);
+.dream-panel p + p {
+  margin-top: 10px;
 }
 
 /* ── Ritual panel ───────────────────────────────────── */
@@ -961,6 +999,14 @@ h1 {
 .ritual-panel p {
   color: rgba(244, 239, 227, 0.82);
   line-height: 1.65;
+}
+
+.dream-prep-note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(244, 239, 227, 0.16);
+  color: rgba(244, 239, 227, 0.62);
+  font-size: 0.86rem;
 }
 
 blockquote {
@@ -972,45 +1018,55 @@ blockquote {
   line-height: 1.6;
 }
 
-/* ── Notification panel ─────────────────────────────── */
+/* ── Support CTA ─────────────────────────────────────── */
 
-.switch-row,
-.time-row {
+.support-cta {
+  grid-column: 1 / -1;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 0;
+  padding: 16px 20px;
 }
 
-.switch-row span,
-.time-row span {
-  color: rgba(244, 239, 227, 0.76);
+.support-cta p {
+  flex: 1 1 320px;
+  margin: 0;
+  color: rgba(244, 239, 227, 0.72);
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
-.switch-row input {
-  width: 22px;
-  height: 22px;
-  accent-color: #d8a85e;
+.support-cta-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
-.time-row input {
-  min-width: 120px;
-  padding: 8px 10px;
-  border: 1px solid rgba(244, 239, 227, 0.18);
-  border-radius: 8px;
-  color: #f4efe3;
-  background: rgba(16, 20, 24, 0.52);
-}
-
-.notification-preview {
-  gap: 8px;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: rgba(87, 139, 136, 0.14);
-  color: rgba(244, 239, 227, 0.8);
+.support-email {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(244, 239, 227, 0.82);
   font-size: 0.88rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.support-email:hover {
+  color: #f4efe3;
+  text-decoration: underline;
+}
+
+.support-coffee {
+  display: flex;
+  align-items: center;
+}
+
+.support-coffee img {
+  display: block;
+  border-radius: 6px;
 }
 
 /* ── Week strip ─────────────────────────────────────── */

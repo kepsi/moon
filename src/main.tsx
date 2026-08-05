@@ -4,29 +4,32 @@ import {
   Activity,
   ArrowDownRight,
   ArrowUpRight,
-  Bell,
   BookOpen,
   Briefcase,
   CalendarDays,
-  Check,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Coffee,
   Eye,
   Heart,
+  Mail,
   MapPin,
   Moon,
   Orbit,
   Sparkles,
   SunMedium,
   Sunrise,
-  Sunset
+  Sunset,
+  User
 } from "lucide-react";
 import { Body, EclipticGeoMoon, MoonPhase, Observer, SearchMoonPhase, SearchRiseSet } from "astronomy-engine";
 import tzLookup from "tz-lookup";
 import { getLunarSourceDay, lunarDaySource, type LunarSourceDay } from "./lunarDaySource";
 import { getTithiWisdom } from "./tithiSource";
+import { getHeroWisdom } from "./heroWisdomSource";
+import { getPracticeWisdom, getDreamPrep } from "./practiceWisdomSource";
 import "./styles.css";
 
 type MoonDay = {
@@ -38,12 +41,6 @@ type MoonDay = {
   tithiNumber: number;
   tithiName: string;
   paksha: "Shukla" | "Krishna";
-  archetype: string;
-  headline: string;
-  guidance: string;
-  focus: string[];
-  ritual: string;
-  affirmation: string;
 };
 
 type Coords = { lat: number; lon: number };
@@ -314,129 +311,6 @@ function getTithiName(tithiNumber: number, paksha: "Shukla" | "Krishna") {
   return tithiNames[tithiNumber - 1];
 }
 
-const dayWisdom = [
-  {
-    archetype: "The first stir",
-    headline: "Begin gently, before the shape is obvious.",
-    guidance: "The lunar field is fresh and impressionable. Choose one intention that feels alive, then protect it from too much noise.",
-    focus: ["quiet starts", "seed intentions", "clearing space"],
-    ritual: "Write one sentence for what you are ready to grow, then make one visible space for it.",
-    affirmation: "I begin without forcing the ending."
-  },
-  {
-    archetype: "The second breath",
-    headline: "Let desire become direction.",
-    guidance: "Today supports small commitments and honest preference. Notice what pulls you forward without needing drama.",
-    focus: ["choice", "stability", "body signals"],
-    ritual: "Take a slow walk and name three things you are choosing on purpose.",
-    affirmation: "My yes becomes clearer when I move slowly."
-  },
-  {
-    archetype: "The bright thread",
-    headline: "Shape the idea with your hands.",
-    guidance: "Creative momentum gathers when you make something tangible. Draft, sketch, plan, cook, arrange, touch the material world.",
-    focus: ["creation", "beauty", "play"],
-    ritual: "Give twenty minutes to a beautiful useful action, without measuring the result.",
-    affirmation: "I let beauty make the work easier."
-  },
-  {
-    archetype: "The threshold keeper",
-    headline: "Meet resistance as information.",
-    guidance: "A snag may reveal where energy is leaking. Simplify the path, remove one obstacle, and avoid turning friction into a verdict.",
-    focus: ["discernment", "repair", "boundaries"],
-    ritual: "Choose one irritation and ask what it is trying to protect.",
-    affirmation: "Obstacles can refine me without defining me."
-  },
-  {
-    archetype: "The living current",
-    headline: "Nourish what wants to continue.",
-    guidance: "The day favors healing, learning, and steady care. Feed the practices that make your system more spacious.",
-    focus: ["care", "learning", "devotion"],
-    ritual: "Drink water slowly, then do one act of maintenance you have been postponing.",
-    affirmation: "What I tend with care becomes trustworthy."
-  },
-  {
-    archetype: "The disciplined flame",
-    headline: "Use effort cleanly.",
-    guidance: "This is a useful day for commitments, training, and courageous follow-through. Keep ambition warm, not harsh.",
-    focus: ["practice", "discipline", "courage"],
-    ritual: "Set a timer for one focused sprint and stop when it rings.",
-    affirmation: "My effort can be devoted and kind."
-  },
-  {
-    archetype: "The solar mirror",
-    headline: "Let confidence become service.",
-    guidance: "Visibility rises. Share what is true, offer what is useful, and let recognition pass through you without gripping it.",
-    focus: ["visibility", "generosity", "leadership"],
-    ritual: "Send one sincere appreciation or useful resource to someone.",
-    affirmation: "I shine best when warmth moves through me."
-  },
-  {
-    archetype: "The deep gate",
-    headline: "Pause before you react.",
-    guidance: "Intensity can make everything feel urgent. Give emotions room to speak, then choose the response that preserves your integrity.",
-    focus: ["shadow work", "patience", "inner truth"],
-    ritual: "Place a hand on your heart and exhale longer than you inhale for nine breaths.",
-    affirmation: "I can feel deeply and still choose wisely."
-  },
-  {
-    archetype: "The inner compass",
-    headline: "Return to meaning.",
-    guidance: "The day asks for perspective. Study, pray, plan travel, or reconnect with the larger why behind your ordinary tasks.",
-    focus: ["meaning", "study", "faith"],
-    ritual: "Read one paragraph from a text that enlarges you, then note the sentence that stays.",
-    affirmation: "My path becomes clearer when I remember why it matters."
-  },
-  {
-    archetype: "The clean ascent",
-    headline: "Make the next right thing elegant.",
-    guidance: "Structure helps the magic land. Organize, decide, refine, and let your future self benefit from today's clarity.",
-    focus: ["order", "decisions", "craft"],
-    ritual: "Clean one surface or close one loop before starting something new.",
-    affirmation: "Clarity is a form of tenderness toward my future."
-  },
-  {
-    archetype: "The sacred pause",
-    headline: "Choose less, and mean it more.",
-    guidance: "This is a contemplative lunar tone. Fasting from distraction may reveal the hunger underneath the habit.",
-    focus: ["restraint", "spiritual focus", "renewal"],
-    ritual: "Take a two-hour break from one default distraction.",
-    affirmation: "I make room for what is subtle and true."
-  },
-  {
-    archetype: "The restoring tide",
-    headline: "Repair the bond between body and promise.",
-    guidance: "Gentle completion is favored. Follow up, apologize, hydrate, stretch, and let steadiness rebuild trust.",
-    focus: ["repair", "follow-through", "wellbeing"],
-    ritual: "Send one overdue reply or make one practical repair at home.",
-    affirmation: "I restore trust through small completed acts."
-  },
-  {
-    archetype: "The blessing hand",
-    headline: "Offer what has ripened.",
-    guidance: "Generosity and gratitude open the day. Share results, teach what you know, and receive support without minimizing it.",
-    focus: ["gratitude", "sharing", "completion"],
-    ritual: "Name five things that helped you arrive here, including your own effort.",
-    affirmation: "I let giving and receiving belong to the same circle."
-  },
-  {
-    archetype: "The final veil",
-    headline: "Release the almost-finished story.",
-    guidance: "A cycle is thinning. Tie off what you can, forgive the imperfect parts, and let old pressure leave with the fading light.",
-    focus: ["release", "forgiveness", "transition"],
-    ritual: "Write down one burden, then tear or fold the paper as a closing gesture.",
-    affirmation: "I do not have to carry what has completed its lesson."
-  },
-  {
-    archetype: "The turning moon",
-    headline: "Stand at the threshold with reverence.",
-    guidance: "Fullness or darkness marks a hinge in the cycle. Celebrate what is illuminated, or rest inside what is not yet visible.",
-    focus: ["thresholds", "integration", "surrender"],
-    ritual: "Light a candle for what is complete, then sit quietly for what is coming.",
-    affirmation: "I trust the turning, even when I cannot see the whole arc."
-  }
-];
-
 function normalizeDegrees(degrees: number) {
   return ((degrees % 360) + 360) % 360;
 }
@@ -544,7 +418,6 @@ function getMoonDay(date: Date): MoonDay {
   const lunarDayNumber = Math.min(30, Math.floor(phaseAngle / 12) + 1);
   const tithiNumber = ((lunarDayNumber - 1) % 15) + 1;
   const paksha = lunarDayNumber <= 15 ? "Shukla" : "Krishna";
-  const wisdom = dayWisdom[tithiNumber - 1];
   const illumination = (1 - Math.cos((phaseAngle * Math.PI) / 180)) / 2;
 
   return {
@@ -555,8 +428,7 @@ function getMoonDay(date: Date): MoonDay {
     lunarDayNumber,
     tithiNumber,
     tithiName: getTithiName(tithiNumber, paksha),
-    paksha,
-    ...wisdom
+    paksha
   };
 }
 
@@ -1267,26 +1139,18 @@ function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; on
   );
 }
 
-const NOTIFICATION_TIME_KEY = "mondkalender.notificationTime";
-const NOTIFICATION_ON_KEY = "mondkalender.notificationsOn";
 const COORDS_KEY = "mondkalender.coords";
 
 function App() {
   const [selectedDate, setSelectedDate] = React.useState(() => new Date());
   const [now, setNow] = React.useState(() => new Date());
   const [deviceTimeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [notificationTime, setNotificationTime] = React.useState(
-    () => window.localStorage.getItem(NOTIFICATION_TIME_KEY) ?? "07:30"
-  );
-  const [notificationsOn, setNotificationsOn] = React.useState(
-    () => window.localStorage.getItem(NOTIFICATION_ON_KEY) === "true"
-  );
-  const [notificationStatus, setNotificationStatus] = React.useState<"idle" | "denied" | "unsupported">("idle");
   const [coords, setCoords] = React.useState<Coords | null>(() => {
     const saved = window.localStorage.getItem(COORDS_KEY);
     return saved ? (JSON.parse(saved) as Coords) : null;
   });
   const [locationStatus, setLocationStatus] = React.useState<LocationStatus>("idle");
+  const [dreamPart, setDreamPart] = React.useState<"early" | "late">("early");
 
   const handleEnableLocation = () => {
     if (!("geolocation" in navigator)) {
@@ -1312,73 +1176,20 @@ function App() {
     return () => window.clearInterval(clock);
   }, []);
 
-  React.useEffect(() => {
-    window.localStorage.setItem(NOTIFICATION_TIME_KEY, notificationTime);
-    window.localStorage.setItem(NOTIFICATION_ON_KEY, String(notificationsOn));
-  }, [notificationTime, notificationsOn]);
-
-  const handleToggleNotifications = async (checked: boolean) => {
-    if (!checked) {
-      setNotificationsOn(false);
-      return;
-    }
-
-    if (!("Notification" in window)) {
-      setNotificationStatus("unsupported");
-      setNotificationsOn(false);
-      return;
-    }
-
-    const permission =
-      Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
-
-    if (permission !== "granted") {
-      setNotificationStatus("denied");
-      setNotificationsOn(false);
-      return;
-    }
-
-    setNotificationStatus("idle");
-    setNotificationsOn(true);
-  };
-
-  React.useEffect(() => {
-    if (!notificationsOn || !("Notification" in window) || Notification.permission !== "granted") {
-      return;
-    }
-
-    let timeoutId: number;
-
-    const scheduleNext = () => {
-      const [hours, minutes] = notificationTime.split(":").map(Number);
-      const target = new Date();
-      target.setHours(hours, minutes, 0, 0);
-      if (target.getTime() <= Date.now()) {
-        target.setDate(target.getDate() + 1);
-      }
-
-      timeoutId = window.setTimeout(() => {
-        const moonDay = getMoonDay(atHour(new Date(), 12));
-        new Notification("Mondkalender", {
-          body: moonDay.headline,
-          tag: "mondkalender-daily"
-        });
-        scheduleNext();
-      }, target.getTime() - Date.now());
-    };
-
-    scheduleNext();
-    return () => window.clearTimeout(timeoutId);
-  }, [notificationsOn, notificationTime]);
-
   const selectedMoment = isSameLocalDate(selectedDate, now) ? now : atHour(selectedDate, 12);
   const today = getMoonDay(selectedMoment);
-  const wakeDreamMoment = atHour(addDays(selectedDate, -1), 23);
-  const tonightDreamMoment = atHour(selectedDate, 23);
+  // A lunar day can change mid-sleep, so the dream you woke with may belong to either the
+  // lunar day active at bedtime or the one active toward morning. Offer both when they differ.
+  const bedtimeMoment = atHour(addDays(selectedDate, -1), 23);
+  const morningMoment = atHour(selectedDate, 7);
+  const tonightBedtimeMoment = atHour(selectedDate, 23);
   const moonZodiac = getMoonZodiac(today.date);
   const week = Array.from({ length: 7 }, (_, index) => getMoonDay(atHour(addDays(selectedDate, index - 2), 12)));
 
   const dayKey = today.date.toDateString();
+  React.useEffect(() => {
+    setDreamPart("early");
+  }, [dayKey]);
   const tithiWindow = React.useMemo(
     () => getTithiWindow(today.date, today.lunarDayNumber),
     [dayKey, today.lunarDayNumber]
@@ -1410,8 +1221,23 @@ function App() {
 
   const civilLunarDay = getCivilLunarDay(selectedDate);
   const symbolDay = getSymbolDay(today.date, moonriseLadder);
-  const wakeSymbolDay = getSymbolDay(wakeDreamMoment, moonriseLadder);
-  const tonightSymbolDay = getSymbolDay(tonightDreamMoment, moonriseLadder);
+  const heroWisdom = getHeroWisdom(symbolDay.number, symbolDay.source.doToday, moonZodiac.sign);
+  const practiceWisdom = getPracticeWisdom(symbolDay.number, moonZodiac.sign.name);
+
+  const wakeSymbolDayBedtime = getSymbolDay(bedtimeMoment, moonriseLadder);
+  const wakeSymbolDayMorning = getSymbolDay(morningMoment, moonriseLadder);
+  // Only offer the toggle when we have real moonrise data: the civil-day fallback changes at
+  // every local midnight regardless of the actual moon, which would make it fire every single
+  // night and say nothing meaningful.
+  const dreamSplitsOvernight =
+    !wakeSymbolDayBedtime.approximate && wakeSymbolDayBedtime.number !== wakeSymbolDayMorning.number;
+  const wakeSymbolDay = dreamPart === "late" && dreamSplitsOvernight ? wakeSymbolDayMorning : wakeSymbolDayBedtime;
+
+  // Tonight's own bedtime lunar day (may already differ from today's displayed one) — used only
+  // to check whether it's a day whose dream calls for preparing before sleep.
+  const tonightSymbolDay = getSymbolDay(tonightBedtimeMoment, moonriseLadder);
+  const dreamPrep = getDreamPrep(tonightSymbolDay.number);
+
   const weekSymbolDays = week.map((day) => getSymbolDay(day.date, moonriseLadder));
 
   const todayMoonrise = moonriseLadder ? findLadderEntry(moonriseLadder, today.date) : undefined;
@@ -1438,20 +1264,40 @@ function App() {
             <span className="brand-name">Mondkalender</span>
           </div>
           <div className="top-actions">
-            <div
-              className="live-clock"
-              aria-label={`Current time in ${timeZone}`}
-              title={
-                locationTimeZone && locationTimeZone !== deviceTimeZone
-                  ? `Using your location's time zone (device is set to ${deviceTimeZone})`
-                  : undefined
-              }
-            >
-              <span>{formatClock(now, timeZone)}</span>
-              <small className="live-clock-zone">
-                {timeZone}
-                {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
-              </small>
+            <div className="clock-row">
+              <button
+                className="icon-button"
+                onClick={() =>
+                  document.getElementById("support-cta")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                aria-label="Account & more features"
+              >
+                <User size={18} />
+              </button>
+              <a
+                className="icon-button"
+                href="https://buymeacoffee.com/drliebhoff"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Buy me a coffee"
+              >
+                <Coffee size={18} />
+              </a>
+              <div
+                className="live-clock"
+                aria-label={`Current time in ${timeZone}`}
+                title={
+                  locationTimeZone && locationTimeZone !== deviceTimeZone
+                    ? `Using your location's time zone (device is set to ${deviceTimeZone})`
+                    : undefined
+                }
+              >
+                <span>{formatClock(now, timeZone)}</span>
+                <small className="live-clock-zone">
+                  {timeZone}
+                  {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
+                </small>
+              </div>
             </div>
             <CalendarButton selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           </div>
@@ -1538,11 +1384,11 @@ function App() {
               </button>
             )}
 
-            <h1>{today.headline}</h1>
-            <p className="guidance">{today.guidance}</p>
+            <h1>{heroWisdom.headline}</h1>
+            <p className="guidance">{heroWisdom.guidance}</p>
 
             <div className="focus-list">
-              {today.focus.map((item) => (
+              {heroWisdom.focus.map((item) => (
                 <span key={item}>{item}</span>
               ))}
             </div>
@@ -1569,19 +1415,43 @@ function App() {
             <h2>Dreams After Waking</h2>
           </div>
           <div className="dream-context">
-            <span>Dream you woke with</span>
+            <div className="dream-context-heading">
+              <span>Dream you woke with</span>
+              {dreamSplitsOvernight ? (
+                <div className="dream-toggle">
+                  <button
+                    className="icon-button"
+                    onClick={() => setDreamPart("early")}
+                    disabled={dreamPart === "early"}
+                    aria-label="Earlier in the night, before the lunar day changed"
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+                  <small>{dreamPart === "early" ? "earlier in the night" : "later, toward morning"}</small>
+                  <button
+                    className="icon-button"
+                    onClick={() => setDreamPart("late")}
+                    disabled={dreamPart === "late"}
+                    aria-label="Later in the night, toward morning"
+                  >
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              ) : null}
+            </div>
             <strong>
               {wakeSymbolDay.source.emoji} Day {wakeSymbolDay.number} · {wakeSymbolDay.source.symbol}
             </strong>
+            <span className="dream-window">
+              {formatPeriodMoment(wakeSymbolDay.start, timeZone)} – {formatPeriodMoment(wakeSymbolDay.end, timeZone)}
+              {wakeSymbolDay.approximate ? " (est.)" : null}
+            </span>
           </div>
           <h3>{wakeSymbolDay.source.dreamFocus}</h3>
           <p>{wakeSymbolDay.source.dreamGuidance}</p>
-          <div className="tonight-note">
-            <span>Tonight</span>
-            <strong>
-              {tonightSymbolDay.source.emoji} Day {tonightSymbolDay.number} · {tonightSymbolDay.source.dreamFocus}
-            </strong>
-          </div>
+          <p>{wakeSymbolDay.source.dreamTiming}</p>
+          <p>{wakeSymbolDay.source.dreamTip}</p>
+          {wakeSymbolDay.source.dreamRemedy ? <p>{wakeSymbolDay.source.dreamRemedy}</p> : null}
         </article>
 
         <article className="panel ritual-panel">
@@ -1589,43 +1459,9 @@ function App() {
             <SunMedium size={19} />
             <h2>Today's Practice</h2>
           </div>
-          <p>{today.ritual}</p>
-          <blockquote>{today.affirmation}</blockquote>
-        </article>
-
-        <article className="panel notification-panel">
-          <div className="panel-heading">
-            <Bell size={19} />
-            <h2>Daily Notification</h2>
-          </div>
-          <label className="switch-row">
-            <span>Morning lunar note</span>
-            <input
-              type="checkbox"
-              checked={notificationsOn}
-              onChange={(event) => handleToggleNotifications(event.target.checked)}
-            />
-          </label>
-          <label className="time-row">
-            <span>Delivery time</span>
-            <input
-              type="time"
-              value={notificationTime}
-              onChange={(event) => setNotificationTime(event.target.value)}
-            />
-          </label>
-          <div className="notification-preview">
-            <Check size={16} />
-            <span>
-              {notificationStatus === "denied"
-                ? "Notifications are blocked in your browser settings. Allow them, then try again."
-                : notificationStatus === "unsupported"
-                ? "This browser does not support notifications."
-                : notificationsOn
-                ? `${notificationTime} · ${today.headline}`
-                : "Turn on notifications when you are ready for a daily lunar prompt."}
-            </span>
-          </div>
+          <p>{practiceWisdom}</p>
+          {dreamPrep ? <p className="dream-prep-note">{dreamPrep}</p> : null}
+          <blockquote>{symbolDay.source.tagline}</blockquote>
         </article>
 
         <section className="week-strip" aria-label="Seven day moon outlook">
@@ -1641,6 +1477,31 @@ function App() {
               <small>{weekSymbolDays[index].number}</small>
             </button>
           ))}
+        </section>
+
+        <section className="support-cta" id="support-cta">
+          <p>
+            Enjoying this app and want more — notifications, personalised birth-date guidance, and beyond? Send me an
+            email or consider buying me a coffee.
+          </p>
+          <div className="support-cta-actions">
+            <a className="support-email" href="mailto:moon@liebhoff.com">
+              <Mail size={16} />
+              moon@liebhoff.com
+            </a>
+            <a
+              className="support-coffee"
+              href="https://buymeacoffee.com/drliebhoff"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                alt="Buy me a coffee"
+                height={36}
+              />
+            </a>
+          </div>
         </section>
       </section>
     </main>
