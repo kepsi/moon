@@ -1,3 +1,6 @@
+import type { Language } from "./i18n";
+import { lunarDaySourceDe } from "./lunarDaySource.de";
+
 export type LunarSourceDay = {
   lunarDay: number;
   symbol: string;
@@ -720,6 +723,11 @@ export const lunarDaySource: LunarSourceDay[] = [
   }
 ];
 
-export function getLunarSourceDay(lunarDay: number) {
-  return lunarDaySource[(lunarDay - 1 + lunarDaySource.length) % lunarDaySource.length];
+export function getLunarDaySourceList(language: Language): LunarSourceDay[] {
+  return language === "de" ? lunarDaySourceDe : lunarDaySource;
+}
+
+export function getLunarSourceDay(lunarDay: number, language: Language = "en") {
+  const list = getLunarDaySourceList(language);
+  return list[(lunarDay - 1 + list.length) % list.length];
 }

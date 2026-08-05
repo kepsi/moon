@@ -124,6 +124,33 @@ p {
   color: #c5eee8;
 }
 
+.language-switcher {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(244, 239, 227, 0.22);
+  border-radius: 8px;
+  background: rgba(16, 20, 24, 0.42);
+  backdrop-filter: blur(12px);
+}
+
+.language-switcher-option {
+  padding: 4px 9px;
+  border: none;
+  border-radius: 6px;
+  color: rgba(244, 239, 227, 0.5);
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.language-switcher-option.active {
+  color: #131713;
+  background: #e7d59b;
+}
+
 .brand-mark,
 .icon-button {
   justify-content: center;

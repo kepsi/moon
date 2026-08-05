@@ -1,3 +1,6 @@
+import type { Language } from "./i18n";
+import { heroWisdomDe } from "./heroWisdomSource.de";
+
 export type HeroWisdom = { headline: string; guidance: string; focus: string[] };
 
 type WisdomLine = { headline: string; guidance: string };
@@ -467,11 +470,18 @@ const heroWisdom: WisdomLine[][] = [
 // Blends the Vronsky lunar day (1-30, moonrise-to-moonrise — see getSymbolDay in main.tsx)
 // with the Moon's current zodiac sign. Focus tags are pulled straight from the day's and
 // sign's own real content (doToday / bestFor), never invented.
-export function getHeroWisdom(lunarDay: number, doToday: string[], sign: { name: string; bestFor: string[] }): HeroWisdom {
-  const dayIndex = ((lunarDay - 1) % heroWisdom.length + heroWisdom.length) % heroWisdom.length;
-  const signOrder = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-  const signIndex = signOrder.indexOf(sign.name);
-  const line = heroWisdom[dayIndex][signIndex < 0 ? 0 : signIndex];
+// `signIndex` is the sign's fixed position (Aries=0 .. Pisces=11), independent of language —
+// callers resolve this once against whichever zodiac list they're already using.
+export function getHeroWisdom(
+  lunarDay: number,
+  doToday: string[],
+  sign: { signIndex: number; bestFor: string[] },
+  language: Language = "en"
+): HeroWisdom {
+  const list = language === "de" ? heroWisdomDe : heroWisdom;
+  const dayIndex = ((lunarDay - 1) % list.length + list.length) % list.length;
+  const signIndex = sign.signIndex >= 0 && sign.signIndex < 12 ? sign.signIndex : 0;
+  const line = list[dayIndex][signIndex];
 
   return {
     headline: line.headline,

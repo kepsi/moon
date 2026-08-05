@@ -1,3 +1,6 @@
+import type { Language } from "./i18n";
+import { practiceWisdomDe, dreamPrepByDayDe } from "./practiceWisdomSource.de";
+
 // One concrete, blended practice suggestion per (Vronsky lunar day, Moon sign) pair — a real,
 // varied action (journaling prompt, a specific read, a call, a workout, a small ritual...)
 // rather than defaulting to meditation every time. The day supplies the theme/activity type;
@@ -460,14 +463,14 @@ const practiceWisdom: string[][] = [
   ]
 ];
 
-const signOrder = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-
 // Blends the Vronsky lunar day (1-30, moonrise-to-moonrise — see getSymbolDay in main.tsx)
-// with the Moon's current zodiac sign into one concrete practice suggestion.
-export function getPracticeWisdom(lunarDay: number, signName: string): string {
-  const dayIndex = ((lunarDay - 1) % practiceWisdom.length + practiceWisdom.length) % practiceWisdom.length;
-  const signIndex = signOrder.indexOf(signName);
-  return practiceWisdom[dayIndex][signIndex < 0 ? 0 : signIndex];
+// with the Moon's current zodiac sign into one concrete practice suggestion. `signIndex` is
+// the sign's fixed position (Aries=0 .. Pisces=11), independent of language.
+export function getPracticeWisdom(lunarDay: number, signIndex: number, language: Language = "en"): string {
+  const list = language === "de" ? practiceWisdomDe : practiceWisdom;
+  const dayIndex = ((lunarDay - 1) % list.length + list.length) % list.length;
+  const index = signIndex >= 0 && signIndex < 12 ? signIndex : 0;
+  return list[dayIndex][index];
 }
 
 // Lunar days whose dream guidance (see lunarDaySource.ts dreamTiming/dreamTip) calls for
@@ -486,7 +489,8 @@ const dreamPrepByDay: Record<number, string> = {
 
 // `bedtimeLunarDay` is the lunar day actually active at tonight's bedtime (see getSymbolDay
 // called with a ~23:00 anchor in main.tsx) — the same day whose dream you'll wake up with.
-export function getDreamPrep(bedtimeLunarDay: number): string | null {
+export function getDreamPrep(bedtimeLunarDay: number, language: Language = "en"): string | null {
+  const map = language === "de" ? dreamPrepByDayDe : dreamPrepByDay;
   const day = ((bedtimeLunarDay - 1) % 30 + 30) % 30 + 1;
-  return dreamPrepByDay[day] ?? null;
+  return map[day] ?? null;
 }

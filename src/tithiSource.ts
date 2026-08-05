@@ -1,3 +1,6 @@
+import type { Language } from "./i18n";
+import { tithiWisdomDe, purnimaWisdomDe, amavasyaWisdomDe } from "./tithiSource.de";
+
 export type TithiWisdomEntry = {
   tithiNumber: number;
   deity: string;
@@ -200,11 +203,18 @@ export const amavasyaWisdom: Pick<TithiWisdomEntry, "nature" | "auspiciousFor" |
   dietAvoid: ["Non-vegetarian food", "Alcohol"]
 };
 
-export function getTithiWisdom(tithiNumber: number, paksha: "Shukla" | "Krishna"): TithiWisdomEntry {
-  const base = tithiWisdom[tithiNumber - 1];
+export function getTithiWisdom(
+  tithiNumber: number,
+  paksha: "Shukla" | "Krishna",
+  language: Language = "en"
+): TithiWisdomEntry {
+  const list = language === "de" ? tithiWisdomDe : tithiWisdom;
+  const base = list[tithiNumber - 1];
 
   if (tithiNumber === 15) {
-    const variant = paksha === "Shukla" ? purnimaWisdom : amavasyaWisdom;
+    const purnima = language === "de" ? purnimaWisdomDe : purnimaWisdom;
+    const amavasya = language === "de" ? amavasyaWisdomDe : amavasyaWisdom;
+    const variant = paksha === "Shukla" ? purnima : amavasya;
     return { ...base, ...variant };
   }
 

@@ -26,10 +26,13 @@ import {
 } from "lucide-react";
 import { Body, EclipticGeoMoon, MoonPhase, Observer, SearchMoonPhase, SearchRiseSet } from "astronomy-engine";
 import tzLookup from "tz-lookup";
-import { getLunarSourceDay, lunarDaySource, type LunarSourceDay } from "./lunarDaySource";
+import { getLunarSourceDay, getLunarDaySourceList, type LunarSourceDay } from "./lunarDaySource";
 import { getTithiWisdom } from "./tithiSource";
 import { getHeroWisdom } from "./heroWisdomSource";
 import { getPracticeWisdom, getDreamPrep } from "./practiceWisdomSource";
+import { getZodiacSigns } from "./zodiacSource";
+import { LanguageProvider, useLanguage, LANGUAGES, type Language } from "./i18n";
+import { t, getPhaseNameLabel, WEEKDAY_LABELS, DATE_LOCALE } from "./strings";
 import "./styles.css";
 
 type MoonDay = {
@@ -59,244 +62,7 @@ type SymbolDay = {
   source: LunarSourceDay;
 };
 
-type ZodiacSign = {
-  name: string;
-  shortName: string;
-  symbol: string;
-  element: string;
-  mode: string;
-  guidance: string;
-  bestFor: string[];
-  avoid: string[];
-  relationships: string;
-  business: string;
-  housework: string;
-  gardening: string;
-  activeOrgans: string[];
-  foodNote: string;
-  foodFavor: string[];
-  foodAvoid: string[];
-};
-
 const SYNODIC_MONTH = 29.530588853;
-const zodiacSigns: ZodiacSign[] = [
-  {
-    name: "Aries",
-    shortName: "Ari",
-    symbol: "♈",
-    element: "Fire",
-    mode: "Cardinal",
-    guidance: "Moon in Aries runs hot and vital — move the body, hydrate well, and let restlessness burn off through exercise rather than short tempers. Ease up on coffee, sugar, and chocolate.",
-    bestFor: ["first steps", "body heat", "decisions"],
-    avoid: ["impatience", "sharp words", "rushing"],
-    relationships: "Attraction runs fast and magnetic, better suited to short, torrid romance than careful commitment. Family matters take a back seat to private interest.",
-    business: "Good for bold moves and originality, not for contracts or long-range planning. Watch impulsiveness — sign nothing you haven't slept on.",
-    housework: "Sharpen knives and scissors, fix small mechanical things, and polish glass and windows. Leave the dishes and fine china for a gentler day.",
-    gardening: "A fruit day with rising energy. Plant edible crops, harvest grain, and graft the orchard while the moon waxes; prune and manage pests as it wanes.",
-    activeOrgans: ["Head", "Brain", "Eyes", "Face"],
-    foodNote: "Iron-rich vegetables and energizing foods. Avoid excess spice or caffeine that overheats the system.",
-    foodFavor: ["Iron-rich vegetables", "Energizing foods"],
-    foodAvoid: ["Excess spice", "Caffeine"]
-  },
-  {
-    name: "Taurus",
-    shortName: "Tau",
-    symbol: "♉",
-    element: "Earth",
-    mode: "Fixed",
-    guidance: "Moon in Taurus favors new projects and steadying your finances — a fortunate day for furniture or property. Wrap up the throat and ears if the weather turns cold.",
-    bestFor: ["comfort", "money care", "sensual grounding"],
-    avoid: ["stubbornness", "comfort loops", "inflexibility"],
-    relationships: "Taurus moons favor love — warm, sensory, unhurried. A good stretch for outings, small feasts, and letting affection show through touch.",
-    business: "Favorable for serious, steady work: finances, job applications, property and real estate. Build on what already has weight behind it.",
-    housework: "Strong for heavy, physical chores, the kind that reward muscle and patience. Monotonous labor gets finished well now.",
-    gardening: "One of the most fertile signs for planting. Set roots, trees, and bushes, and relocate anything that needs new ground.",
-    activeOrgans: ["Throat", "Neck", "Thyroid", "Vocal cords", "Ears"],
-    foodNote: "Nourishing, grounding foods eaten slowly. Avoid overeating; chew thoroughly and savor the meal.",
-    foodFavor: ["Nourishing, grounding foods", "Eating slowly"],
-    foodAvoid: ["Overeating"]
-  },
-  {
-    name: "Gemini",
-    shortName: "Gem",
-    symbol: "♊",
-    element: "Air",
-    mode: "Mutable",
-    guidance: "Moon in Gemini opens the day to conversation — good for meeting people, trading ideas, calls, and messages. Stretch out the shoulders and upper back.",
-    bestFor: ["messages", "learning", "light planning"],
-    avoid: ["scattered focus", "restlessness", "living in the head"],
-    relationships: "Ties formed now stay light and noncommittal, better for meeting people than locking things down. Let curiosity replace pressure.",
-    business: "Best for networking, pitching ideas, and swapping information. Push existing projects forward rather than launching new ones.",
-    housework: "A good stretch for air quality — install fans or a purifier, freshen rooms, chase out stale air.",
-    gardening: "As the moon wanes, seed, plant, and transplant flowers and vining plants. Also a fitting window for pest control and soil treatment.",
-    activeOrgans: ["Shoulders", "Arms", "Hands", "Lungs", "Nervous system"],
-    foodNote: "Light, varied foods. Breathing exercises and lung-supportive herbs benefit this placement.",
-    foodFavor: ["Light, varied foods", "Lung-supportive herbs"],
-    foodAvoid: ["Heavy foods"]
-  },
-  {
-    name: "Cancer",
-    shortName: "Can",
-    symbol: "♋",
-    element: "Water",
-    mode: "Cardinal",
-    guidance: "Moon in Cancer runs emotionally tender — meet feelings with diplomacy and get proper rest. Favor light foods, and it's a good day for cosmetic or dental care.",
-    bestFor: ["home care", "family repair", "memories"],
-    avoid: ["moodiness", "clinging", "dwelling on the past"],
-    relationships: "Tenderness rises — people turn sentimental, dreamy, easily moved. Warmth deepens contact, especially with those closest to you.",
-    business: "Moods run sensitive and easily bruised, so lead with diplomacy rather than pressure. Read the room before you push for outcomes.",
-    housework: "Good for the wet work of a home — vacuuming, mopping, refreshing the bathroom. General cleaning goes smoothly.",
-    gardening: "Among the most fertile signs. Set moisture-loving, leafy, decorative plants, and prune or graft the orchard now.",
-    activeOrgans: ["Stomach", "Breasts", "Chest", "Lymphatic system"],
-    foodNote: "Comfort foods and easy-to-digest meals. Warm soups, dairy, and gentle stews are supportive and soothing.",
-    foodFavor: ["Comfort foods", "Easy-to-digest meals", "Warm soups and stews"],
-    foodAvoid: ["Hard-to-digest foods"]
-  },
-  {
-    name: "Leo",
-    shortName: "Leo",
-    symbol: "♌",
-    element: "Fire",
-    mode: "Fixed",
-    guidance: "Moon in Leo lifts creative enthusiasm — stay active and decisive, and get proper rest to protect the heart. A good day for a haircut or a festive occasion.",
-    bestFor: ["creativity", "romance", "confidence"],
-    avoid: ["pride", "drama", "seeking validation"],
-    relationships: "The most romantic stretch of the month — love at first sight is entirely plausible. Let warmth and a little drama have their moment.",
-    business: "Creative inspiration runs high, along with optimism, eloquence, and self-belief. Good for anything that asks you to shine.",
-    housework: "Bring your own art and personality into the home. Let something unmistakably yours show up in the space.",
-    gardening: "One of the least fertile signs. Cut back dry branches; while the moon waxes, seed into damp soil or lay a new lawn.",
-    activeOrgans: ["Heart", "Spine", "Upper back"],
-    foodNote: "Warming, generous foods. Heart-healthy choices: berries, leafy greens, olive oil.",
-    foodFavor: ["Warming, generous foods", "Berries, leafy greens, olive oil"],
-    foodAvoid: ["Heart-taxing fatty foods"]
-  },
-  {
-    name: "Virgo",
-    shortName: "Vir",
-    symbol: "♍",
-    element: "Earth",
-    mode: "Mutable",
-    guidance: "Moon in Virgo favors business and intellectual work — a good day to start important projects. Eat well, and it's a fine day for haircuts, manicures, and hand care.",
-    bestFor: ["routines", "health notes", "organizing"],
-    avoid: ["perfectionism", "overthinking", "self-criticism"],
-    relationships: "Connections formed now lean practical over passionate, built on understanding and responsibility rather than sweep-you-off-your-feet romance.",
-    business: "A strong opening for new projects; efficiency, punctuality, and rational thinking come easily. Accounting and detailed financial work go especially well.",
-    housework: "Good for kitchen deep-cleans, the fridge especially, and fixing appliances. Skip airing large loads of laundry.",
-    gardening: "A root day with descending energy, the best sign for setting and transplanting. Enrich soil and manage pests, but don't count on stored harvests lasting.",
-    activeOrgans: ["Intestines", "Digestive system", "Pancreas", "Spleen"],
-    foodNote: "Clean, easily digestible foods. Fermented foods and fiber support the intestines. Eat regular, moderate meals.",
-    foodFavor: ["Clean, easily digestible foods", "Fermented foods and fiber", "Regular, moderate meals"],
-    foodAvoid: ["Irregular, heavy meals"]
-  },
-  {
-    name: "Libra",
-    shortName: "Lib",
-    symbol: "♎",
-    element: "Air",
-    mode: "Cardinal",
-    guidance: "Moon in Libra favors conversation, negotiation, and setting up meetings. Keep the kidneys and bladder warm, and it's a good day for facials, haircuts, eye care, or the dentist.",
-    bestFor: ["conversation", "design", "agreements"],
-    avoid: ["people-pleasing", "avoiding conflict", "indecision"],
-    relationships: "Harmony and open-hearted talk come easily, and partnerships find their balance. Don't let politeness replace real investment, or things turn formal instead of close.",
-    business: "Good for negotiation and diplomatic meetings, not for major decisions. Better to finish what's underway than start something new.",
-    housework: "Lean into beauty and balance — windows (especially on a waning moon), decorative touches, organizing books and magazines. Laundry dries quickly.",
-    gardening: "A flower day with descending energy. Transplant, set flowering herbs, and harvest — seeds saved now tend to be high quality.",
-    activeOrgans: ["Kidneys", "Lower back", "Adrenal glands", "Skin"],
-    foodNote: "Alkaline, balanced diet. Cucumber, watermelon, and lemon water support the kidneys.",
-    foodFavor: ["Alkaline, balanced diet", "Cucumber, watermelon, lemon water"],
-    foodAvoid: ["Acidic, unbalanced foods"]
-  },
-  {
-    name: "Scorpio",
-    shortName: "Sco",
-    symbol: "♏",
-    element: "Water",
-    mode: "Fixed",
-    guidance: "Moon in Scorpio favors creative and intellectual work, and even resolving stubborn problems — just handle matters of emotion with care. Keep the feet warm; a fair day to start renovations.",
-    bestFor: ["shadow work", "intimacy", "release"],
-    avoid: ["suspicion", "control", "testing loyalty"],
-    relationships: "Passion and flirtation intensify, and bonds deepen, but so can jealousy and suspicion. Keep confidences and let honesty do the transforming.",
-    business: "One of the most emotionally charged stretches — keep distance from authority figures, but trust the heightened focus for serious, weighty decisions.",
-    housework: "Good for clearing out old, useless clutter, especially the dusty forgotten corners. Laundry and dishes go well; skip airing bedding or storing damp clothes.",
-    gardening: "A leaf day with descending energy. Gather medicinal herbs, graft, and mow, but hold off on enriching vegetable beds or felling trees.",
-    activeOrgans: ["Reproductive organs", "Colon", "Bladder", "Pelvis"],
-    foodNote: "Cleansing, regenerating foods. Avoid extremes; deep, purposeful nourishment is favored.",
-    foodFavor: ["Cleansing, regenerating foods", "Purposeful nourishment"],
-    foodAvoid: ["Extremes"]
-  },
-  {
-    name: "Sagittarius",
-    shortName: "Sag",
-    symbol: "♐",
-    element: "Fire",
-    mode: "Mutable",
-    guidance: "Moon in Sagittarius brings cheerful energy — good for contracts, applications, and travel. Don't overload yourself; it's also a fine day for massages, manicures, and other care.",
-    bestFor: ["travel plans", "teaching", "faith"],
-    avoid: ["restlessness", "bluntness", "skipping details"],
-    relationships: "A favorable stretch for romantic outings, celebrations, and adventure together. Romance now runs passionate and optimistic, if sometimes brief.",
-    business: "Cheerful energy and rising activity favor contracts, applications, and legal matters. Good for launching ventures and travel, not for buying property.",
-    housework: "Finish what you're motivated to finish. Glass cleans and polishes easily; a good stretch for ironing, organizing clothes, preserving, and baking.",
-    gardening: "A fruit day. Set fruit trees, sow grain, and deal with underground pests, but hold off on new planting or tilling.",
-    activeOrgans: ["Hips", "Thighs", "Liver", "Sciatic nerve"],
-    foodNote: "Generous, liver-supportive foods. Bitter greens, beets, and artichoke are especially beneficial.",
-    foodFavor: ["Liver-supportive foods", "Bitter greens, beets, artichoke"],
-    foodAvoid: ["Liver-taxing rich foods"]
-  },
-  {
-    name: "Capricorn",
-    shortName: "Cap",
-    symbol: "♑",
-    element: "Earth",
-    mode: "Cardinal",
-    guidance: "Moon in Capricorn favors planning and starting serious projects, along with cosmetic and eye care. Steer clear of bureaucratic offices today.",
-    bestFor: ["priorities", "career", "long-term plans"],
-    avoid: ["coldness", "self-criticism", "workaholism"],
-    relationships: "Better for quiet, businesslike contact than romance or celebration — say less, and let commitment build slowly. What starts now can run long and steady.",
-    business: "Favorable for planning and starting serious projects, work needing precision or instruction-following, and real estate. Avoid loans, debts, and job applications; logic runs strong.",
-    housework: "Good for deep, unsentimental decluttering — it's easier to let things go now. Skip storing clothes or shoes, and mind your knees while you work.",
-    gardening: "A root day with rising energy. Plant edible roots and winter vegetables, weed, compost, and manage underground pests — harvest and seed quality are both strong.",
-    activeOrgans: ["Knees", "Bones", "Joints", "Teeth", "Nails"],
-    foodNote: "Mineral-rich foods: bone broth, leafy greens, dairy. Support structural health and the skeletal system.",
-    foodFavor: ["Mineral-rich foods", "Bone broth, leafy greens, dairy"],
-    foodAvoid: ["Mineral-depleting foods"]
-  },
-  {
-    name: "Aquarius",
-    shortName: "Aqu",
-    symbol: "♒",
-    element: "Air",
-    mode: "Fixed",
-    guidance: "Moon in Aquarius sparks curiosity about the unknown, with flashes of inspiration — a fortunate day for meetings and conferences. Skip the bureaucratic offices, and take care of your legs.",
-    bestFor: ["community", "ideas", "technology"],
-    avoid: ["detachment", "rigidity", "denying feelings"],
-    relationships: "Favorable for friendship and flirtation — let originality and warmth draw people in. Bonds lean platonic, with friendship reinforcing romance.",
-    business: "Good for meetings and conferences, tricky for approaching bosses or authority. Innovation, research, and public speaking flourish.",
-    housework: "Good for dry cleaning, new electronics, window washing, airing rooms, and laundry that needs a fresh smell. Baking and small celebrations also favored.",
-    gardening: "One of the least fertile signs. Focus on pest and disease prevention; skip planting or transplanting, since young growth struggles now.",
-    activeOrgans: ["Shins", "Ankles", "Circulatory system"],
-    foodNote: "Light, hydrating foods. Good circulation is supported by moderate movement and steady fluid intake.",
-    foodFavor: ["Light, hydrating foods", "Steady fluid intake"],
-    foodAvoid: ["Dehydrating foods and drinks"]
-  },
-  {
-    name: "Pisces",
-    shortName: "Pis",
-    symbol: "♓",
-    element: "Water",
-    mode: "Mutable",
-    guidance: "Moon in Pisces favors rest, romance, and creativity — saunas and hand or foot baths suit the mood. Alcohol, coffee, and some medicines hit harder than usual, so ease off them today.",
-    bestFor: ["dreamwork", "music", "compassion"],
-    avoid: ["blurred boundaries", "escapism", "absorbing others' emotions"],
-    relationships: "Love now can feel larger than life — follow intuition, but stay alert to illusion, and be ready to walk away if doubt lingers.",
-    business: "Favors creative work, seeking investors, and charitable efforts more than hard strategy. Rest and intuition serve better than mental grind; legal matters can succeed.",
-    housework: "A time to rest more than push. Water-based chores like laundry and mopping suit the mood; leave bedding unaired, since damp lingers.",
-    gardening: "One of the most fertile signs. Plant leafy vegetables, water indoor plants, mow the lawn, but skip pruning or preserving, since harvests won't keep.",
-    activeOrgans: ["Feet", "Lymphatic system", "Immune system"],
-    foodNote: "Gentle, nourishing foods. Fish and easily digestible proteins are supportive. Avoid anything intoxicating.",
-    foodFavor: ["Gentle, nourishing foods", "Fish and digestible proteins"],
-    foodAvoid: ["Intoxicating substances"]
-  }
-];
 
 const tithiNames = [
   "Pratipada", "Dvitiya", "Tritiya", "Chaturthi", "Panchami",
@@ -315,13 +81,13 @@ function normalizeDegrees(degrees: number) {
   return ((degrees % 360) + 360) % 360;
 }
 
-function getMoonZodiac(date: Date) {
+function getMoonZodiac(date: Date, language: Language) {
   const longitude = normalizeDegrees(EclipticGeoMoon(date).lon);
   const signIndex = Math.floor(longitude / 30);
 
   return {
     longitude,
-    sign: zodiacSigns[signIndex],
+    sign: getZodiacSigns(language)[signIndex],
     signIndex,
     degreeInSign: Math.floor(longitude % 30)
   };
@@ -483,15 +249,15 @@ function findLadderEntry(ladder: LadderEntry[], date: Date) {
 
 // Resolves the Vronsky Lunar Days "symbol day" for a moment: moonrise-to-moonrise when we have the
 // reader's coordinates and a ladder covering that moment, otherwise the civil-day estimate.
-function getSymbolDay(date: Date, ladder: LadderEntry[] | null): SymbolDay {
+function getSymbolDay(date: Date, ladder: LadderEntry[] | null, language: Language): SymbolDay {
   const entry = ladder ? findLadderEntry(ladder, date) : undefined;
 
   if (entry) {
-    return { number: entry.number, start: entry.start, end: entry.end, approximate: false, source: getLunarSourceDay(entry.number) };
+    return { number: entry.number, start: entry.start, end: entry.end, approximate: false, source: getLunarSourceDay(entry.number, language) };
   }
 
   const civil = getCivilLunarDay(date);
-  return { number: civil.number, start: civil.start, end: civil.end, approximate: true, source: getLunarSourceDay(civil.number) };
+  return { number: civil.number, start: civil.start, end: civil.end, approximate: true, source: getLunarSourceDay(civil.number, language) };
 }
 
 function addDays(date: Date, days: number) {
@@ -514,8 +280,8 @@ function isSameLocalDate(first: Date, second: Date) {
   );
 }
 
-function formatDate(date: Date, timeZone?: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatDate(date: Date, timeZone: string | undefined, language: Language) {
+  return new Intl.DateTimeFormat(DATE_LOCALE[language], {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -523,8 +289,8 @@ function formatDate(date: Date, timeZone?: string) {
   }).format(date);
 }
 
-function formatClock(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatClock(date: Date, timeZone: string, language: Language) {
+  return new Intl.DateTimeFormat(DATE_LOCALE[language], {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -533,8 +299,8 @@ function formatClock(date: Date, timeZone: string) {
   }).format(date);
 }
 
-function formatPeriodMoment(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatPeriodMoment(date: Date, timeZone: string, language: Language) {
+  return new Intl.DateTimeFormat(DATE_LOCALE[language], {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -544,8 +310,8 @@ function formatPeriodMoment(date: Date, timeZone: string) {
   }).format(date);
 }
 
-function formatTimeOnly(date: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatTimeOnly(date: Date, timeZone: string, language: Language) {
+  return new Intl.DateTimeFormat(DATE_LOCALE[language], {
     hour: "2-digit",
     minute: "2-digit",
     timeZone
@@ -593,16 +359,18 @@ function PeriodRange({
   centered?: boolean;
   approximate?: boolean;
 }) {
+  const { language } = useLanguage();
+
   return (
     <div className={`period-range${centered ? " centered" : ""}${approximate ? " approximate" : ""}`}>
       <div className="period-point">
-        <small>{approximate ? "Started (est.)" : "Started"}</small>
-        <strong>{formatPeriodMoment(start, timeZone)}</strong>
+        <small>{t(approximate ? "startedEstimate" : "started", language)}</small>
+        <strong>{formatPeriodMoment(start, timeZone, language)}</strong>
       </div>
       <ChevronRight className="period-arrow" size={14} />
       <div className="period-point align-end">
-        <small>{approximate ? "Ends (est.)" : "Ends"}</small>
-        <strong>{formatPeriodMoment(end, timeZone)}</strong>
+        <small>{t(approximate ? "endsEstimate" : "ends", language)}</small>
+        <strong>{formatPeriodMoment(end, timeZone, language)}</strong>
       </div>
     </div>
   );
@@ -626,21 +394,24 @@ function MoonZodiacHero({
   nextFullMoon: Date | null;
   timeZone: string;
 }) {
+  const { language } = useLanguage();
+  const phaseLabel = getPhaseNameLabel((day.phaseAngle / 360) * SYNODIC_MONTH, language);
+
   return (
     <div
       className="moon-zodiac-hero"
-      aria-label={`${day.phaseName}, ${day.phasePercent}% illuminated, Tithi ${day.tithiNumber} (${day.paksha}), Moon in ${zodiac.sign.name}, Vronsky lunar day symbol ${symbolDay.source.symbol}`}
+      aria-label={`${phaseLabel}, ${day.phasePercent}%, Tithi ${day.tithiNumber} (${day.paksha}), ${t("moonInLabel", language, { inPhrase: zodiac.sign.inPhrase })}, ${symbolDay.source.symbol}`}
     >
       <span className="hero-tick-ring zodiac-ring-ticks" aria-hidden="true" />
       <span className="hero-tick-ring tithi-ring" aria-hidden="true" />
       <span className="hero-tick-ring symbol-ring" aria-hidden="true" />
 
-      {lunarDaySource.map((source) => (
+      {getLunarDaySourceList(language).map((source) => (
         <span
           key={source.lunarDay}
           className={`hero-symbol-glyph${source.lunarDay === symbolDay.number ? " active" : ""}`}
           style={wheelLabelStyle(source.lunarDay - 1, 30, 34, 6)}
-          title={`Day ${source.lunarDay}: ${source.symbol}`}
+          title={t("dayLabel", language, { n: source.lunarDay }) + ": " + source.symbol}
         >
           {source.emoji}
         </span>
@@ -655,17 +426,17 @@ function MoonZodiacHero({
         <span
           className="hero-syzygy-marker new-moon"
           style={wheelLabelStyle(0, 1, 24, 0)}
-          title={nextNewMoon ? `New Moon — ${formatPeriodMoment(nextNewMoon, timeZone)}` : "New Moon"}
+          title={nextNewMoon ? t("newMoonTitle", language, { time: formatPeriodMoment(nextNewMoon, timeZone, language) }) : t("newMoon", language)}
         >
-          ● {nextNewMoon ? formatTimeOnly(nextNewMoon, timeZone) : ""}
+          ● {nextNewMoon ? formatTimeOnly(nextNewMoon, timeZone, language) : ""}
         </span>
       ) : day.tithiName === "Purnima" ? (
         <span
           className="hero-syzygy-marker full-moon"
           style={wheelLabelStyle(0, 1, 24, 180)}
-          title={nextFullMoon ? `Full Moon — ${formatPeriodMoment(nextFullMoon, timeZone)}` : "Full Moon"}
+          title={nextFullMoon ? t("fullMoonTitle", language, { time: formatPeriodMoment(nextFullMoon, timeZone, language) }) : t("fullMoon", language)}
         >
-          ○ {nextFullMoon ? formatTimeOnly(nextFullMoon, timeZone) : ""}
+          ○ {nextFullMoon ? formatTimeOnly(nextFullMoon, timeZone, language) : ""}
         </span>
       ) : (
         <span
@@ -677,7 +448,7 @@ function MoonZodiacHero({
         </span>
       )}
 
-      {zodiacSigns.map((sign, index) => (
+      {getZodiacSigns(language).map((sign, index) => (
         <span
           key={sign.name}
           className={`zodiac-hero-label${index === zodiac.signIndex ? " active" : ""}`}
@@ -694,7 +465,7 @@ function MoonZodiacHero({
 
       <div className="hero-moon-badge-wrap">
         <div className="hero-moon-badge">
-          <span>{day.phaseName}</span>
+          <span>{phaseLabel}</span>
           <strong>{day.phasePercent}%</strong>
         </div>
       </div>
@@ -706,13 +477,14 @@ function MoonZodiacHero({
 // visual now lives combined into the hero dial; this panel carries the traditional
 // Panchang-style reference content (deity, tithi class, dos/don'ts).
 function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: Date; end: Date }; timeZone: string }) {
-  const wisdom = getTithiWisdom(day.tithiNumber, day.paksha);
+  const { language } = useLanguage();
+  const wisdom = getTithiWisdom(day.tithiNumber, day.paksha, language);
 
   return (
     <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <Orbit size={19} />
-        <h2>Tithi {day.tithiNumber} · {day.tithiName}</h2>
+        <h2>{t("tithiLabel", language, { n: day.tithiNumber, paksha: day.tithiName })}</h2>
       </div>
 
       <div className="zodiac-guide-header">
@@ -722,7 +494,7 @@ function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: 
             <span>{day.paksha}</span>
             <span>{wisdom.group}</span>
           </div>
-          <p className="zodiac-degree-note">Ruled by {wisdom.deity}</p>
+          <p className="zodiac-degree-note">{t("ruledBy", language, { deity: wisdom.deity })}</p>
         </div>
       </div>
 
@@ -731,7 +503,7 @@ function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: 
       <p>{wisdom.nature}</p>
 
       <div className="organ-row">
-        <small>Favor</small>
+        <small>{t("favor", language)}</small>
         <div className="organ-chips">
           {wisdom.auspiciousFor.map((item) => (
             <span key={item} className="organ-chip green">{item}</span>
@@ -740,7 +512,7 @@ function TithiPanel({ day, window, timeZone }: { day: MoonDay; window: { start: 
       </div>
 
       <div className="organ-row">
-        <small>Avoid</small>
+        <small>{t("avoid", language)}</small>
         <div className="organ-chips">
           {wisdom.avoid.map((item) => (
             <span key={item} className="organ-chip red">{item}</span>
@@ -761,11 +533,13 @@ function ZodiacGuidancePanel({
   window: { start: Date; end: Date };
   timeZone: string;
 }) {
+  const { language } = useLanguage();
+
   return (
     <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <Sparkles size={19} />
-        <h2>Moon in {zodiac.sign.name}</h2>
+        <h2>{t("moonInLabel", language, { inPhrase: zodiac.sign.inPhrase })}</h2>
       </div>
 
       <div className="zodiac-guide-header">
@@ -775,7 +549,7 @@ function ZodiacGuidancePanel({
             <span>{zodiac.sign.element}</span>
             <span>{zodiac.sign.mode}</span>
           </div>
-          <p className="zodiac-degree-note">{zodiac.degreeInSign}° in {zodiac.sign.name}</p>
+          <p className="zodiac-degree-note">{zodiac.degreeInSign}° {zodiac.sign.inPhrase}</p>
         </div>
       </div>
 
@@ -784,7 +558,7 @@ function ZodiacGuidancePanel({
       <p>{zodiac.sign.guidance}</p>
 
       <div className="organ-row">
-        <small>Favor</small>
+        <small>{t("favor", language)}</small>
         <div className="organ-chips">
           {zodiac.sign.bestFor.map((item) => (
             <span key={item} className="organ-chip green">{item}</span>
@@ -793,7 +567,7 @@ function ZodiacGuidancePanel({
       </div>
 
       <div className="organ-row">
-        <small>Avoid</small>
+        <small>{t("avoid", language)}</small>
         <div className="organ-chips">
           {zodiac.sign.avoid.map((item) => (
             <span key={item} className="organ-chip red">{item}</span>
@@ -820,19 +594,20 @@ function SymbolPanel({
   onEnableLocation: () => void;
 }) {
   const source = symbolDay.source;
+  const { language } = useLanguage();
 
   return (
     <article className="panel zodiac-guide-panel">
       <div className="panel-heading">
         <BookOpen size={19} />
-        <h2>Lunar Day Symbol · {source.symbol}</h2>
+        <h2>{t("lunarDaySymbolHeading", language, { symbol: source.symbol })}</h2>
       </div>
 
       <div className="zodiac-guide-header">
         <span className="zodiac-symbol-large" aria-hidden="true">{source.emoji}</span>
         <div>
           <div className="zodiac-meta">
-            <span>Day {symbolDay.number}</span>
+            <span>{t("dayLabel", language, { n: symbolDay.number })}</span>
           </div>
           <p className="zodiac-degree-note">{source.tagline}</p>
         </div>
@@ -842,12 +617,12 @@ function SymbolPanel({
         <button className="location-prompt" onClick={onEnableLocation} disabled={locationStatus === "pending"}>
           <MapPin size={14} />
           {locationStatus === "pending"
-            ? "Locating…"
+            ? t("locatingHero", language)
             : locationStatus === "denied"
-            ? "Location blocked — showing calendar-day estimate"
+            ? t("locationBlockedSymbol", language)
             : locationStatus === "unsupported"
-            ? "Location unavailable — showing calendar-day estimate"
-            : "Enable location for exact moonrise-based times"}
+            ? t("locationUnsupportedSymbol", language)
+            : t("enableLocationSymbol", language)}
         </button>
       ) : null}
 
@@ -856,7 +631,7 @@ function SymbolPanel({
       <p>{source.overview}</p>
 
       <div className="organ-row">
-        <small>Favor</small>
+        <small>{t("favor", language)}</small>
         <div className="organ-chips">
           {source.doToday.map((item) => (
             <span key={item} className="organ-chip green">{item}</span>
@@ -865,7 +640,7 @@ function SymbolPanel({
       </div>
 
       <div className="organ-row">
-        <small>Avoid</small>
+        <small>{t("avoid", language)}</small>
         <div className="organ-chips">
           {source.avoidToday.map((item) => (
             <span key={item} className="organ-chip red">{item}</span>
@@ -874,7 +649,7 @@ function SymbolPanel({
       </div>
 
       <a href={source.sourceUrl} target="_blank" rel="noreferrer">
-        Source: Vronsky Lunar Days, day {symbolDay.number} — via OM Journal →
+        {t("sourceLinkLabel", language, { n: symbolDay.number })}
       </a>
     </article>
   );
@@ -892,18 +667,19 @@ function BodyWisdomPanel({
   symbolDay: SymbolDay;
 }) {
   const daySource = symbolDay.source;
-  const tithiWisdom = getTithiWisdom(day.tithiNumber, day.paksha);
+  const { language } = useLanguage();
+  const tithiWisdom = getTithiWisdom(day.tithiNumber, day.paksha, language);
 
   return (
     <article className="panel body-wisdom-panel">
       <div className="panel-heading">
         <Activity size={19} />
-        <h2>Body & Nourishment</h2>
+        <h2>{t("bodyNourishmentHeading", language)}</h2>
       </div>
 
       <div className="wisdom-grid">
         <div className="wisdom-section">
-          <h3>Active areas</h3>
+          <h3>{t("activeAreas", language)}</h3>
           <div className="organ-chips">
             {tithiWisdom.activeOrgans.map((organ) => (
               <span key={`tithi-${organ}`} className="organ-chip gold">{organ}</span>
@@ -918,7 +694,7 @@ function BodyWisdomPanel({
         </div>
 
         <div className="wisdom-section">
-          <h3>Favor</h3>
+          <h3>{t("favor", language)}</h3>
           <div className="organ-chips">
             {tithiWisdom.dietFavor.map((item) => (
               <span key={`tithi-${item}`} className="organ-chip green">{item}</span>
@@ -933,7 +709,7 @@ function BodyWisdomPanel({
         </div>
 
         <div className="wisdom-section">
-          <h3>Avoid</h3>
+          <h3>{t("avoid", language)}</h3>
           <div className="organ-chips">
             {tithiWisdom.dietAvoid.map((item) => (
               <span key={`tithi-${item}`} className="organ-chip red">{item}</span>
@@ -948,14 +724,14 @@ function BodyWisdomPanel({
         </div>
 
         <div className="wisdom-section">
-          <h3 className="silver">Meditation</h3>
+          <h3 className="silver">{t("meditationLabel", language)}</h3>
           <p>{daySource.meditation}</p>
         </div>
 
         <div className="wisdom-section food-section">
-          <h3 className="silver">Food — moon day {symbolDay.number}</h3>
+          <h3 className="silver">{t("foodMoonDayLabel", language, { n: symbolDay.number })}</h3>
           <p>{daySource.foodNote}</p>
-          <h3 className="blue">Food — {zodiac.sign.symbol} {zodiac.sign.name}</h3>
+          <h3 className="blue">{t("foodZodiacLabel", language, { symbol: zodiac.sign.symbol, name: zodiac.sign.name })}</h3>
           <p>{zodiac.sign.foodNote}</p>
         </div>
       </div>
@@ -971,20 +747,22 @@ function RelationshipsPanel({
   zodiac: ReturnType<typeof getMoonZodiac>;
   symbolDay: SymbolDay;
 }) {
+  const { language } = useLanguage();
+
   return (
     <article className="panel relationships-panel">
       <div className="panel-heading">
         <Heart size={19} />
-        <h2>Relationships</h2>
+        <h2>{t("relationshipsHeading", language)}</h2>
       </div>
 
       <div className="wisdom-grid dual-source-grid">
         <div className="wisdom-section">
-          <h3 className="silver">Moon day {symbolDay.number} · {symbolDay.source.symbol}</h3>
+          <h3 className="silver">{t("moonDayLabel", language, { n: symbolDay.number, symbol: symbolDay.source.symbol })}</h3>
           <p>{symbolDay.source.relationships}</p>
         </div>
         <div className="wisdom-section">
-          <h3 className="blue">Moon in {zodiac.sign.name}</h3>
+          <h3 className="blue">{t("moonInLabel", language, { inPhrase: zodiac.sign.inPhrase })}</h3>
           <p>{zodiac.sign.relationships}</p>
         </div>
       </div>
@@ -1001,21 +779,23 @@ function BusinessHouseworkGardenPanel({
   zodiac: ReturnType<typeof getMoonZodiac>;
   symbolDay: SymbolDay;
 }) {
+  const { language } = useLanguage();
+
   return (
     <article className="panel business-panel">
       <div className="panel-heading">
         <Briefcase size={19} />
-        <h2>Business, Housework & Garden</h2>
+        <h2>{t("businessHouseworkGardenHeading", language)}</h2>
       </div>
 
       <div className="wisdom-grid dual-source-grid">
         <div className="wisdom-section">
-          <h3 className="silver">Moon day {symbolDay.number} · {symbolDay.source.symbol}</h3>
+          <h3 className="silver">{t("moonDayLabel", language, { n: symbolDay.number, symbol: symbolDay.source.symbol })}</h3>
           <p>{symbolDay.source.business}</p>
           <p>{symbolDay.source.housework}</p>
         </div>
         <div className="wisdom-section">
-          <h3 className="blue">Moon in {zodiac.sign.name}</h3>
+          <h3 className="blue">{t("moonInLabel", language, { inPhrase: zodiac.sign.inPhrase })}</h3>
           <p>{zodiac.sign.business}</p>
           <p>{zodiac.sign.housework}</p>
           <p>{zodiac.sign.gardening}</p>
@@ -1025,11 +805,10 @@ function BusinessHouseworkGardenPanel({
   );
 }
 
-const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
 // The topbar's calendar button: a small month-grid popover for jumping straight to any date,
 // instead of paging through the hero's prev/next-day arrows one day at a time.
 function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; onSelectDate: (date: Date) => void }) {
+  const { language } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [viewMonth, setViewMonth] = React.useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -1071,7 +850,7 @@ function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; on
 
   return (
     <div className="calendar-button-wrap" ref={wrapRef}>
-      <button className="icon-button calendar-button" aria-label="Open calendar" aria-expanded={open} onClick={handleToggle}>
+      <button className="icon-button calendar-button" aria-label={t("openCalendarAria", language)} aria-expanded={open} onClick={handleToggle}>
         <CalendarDays size={19} />
       </button>
 
@@ -1079,26 +858,26 @@ function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; on
         <div className="calendar-popover">
           <div className="calendar-popover-header">
             <div className="calendar-nav-group">
-              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year - 1, month, 1))} aria-label="Previous year">
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year - 1, month, 1))} aria-label={t("previousYearAria", language)}>
                 <ChevronsLeft size={15} />
               </button>
-              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year, month - 1, 1))} aria-label="Previous month">
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year, month - 1, 1))} aria-label={t("previousMonthAria", language)}>
                 <ChevronLeft size={15} />
               </button>
             </div>
-            <span>{viewMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</span>
+            <span>{viewMonth.toLocaleDateString(DATE_LOCALE[language], { month: "long", year: "numeric" })}</span>
             <div className="calendar-nav-group">
-              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year, month + 1, 1))} aria-label="Next month">
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year, month + 1, 1))} aria-label={t("nextMonthAria", language)}>
                 <ChevronRight size={15} />
               </button>
-              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year + 1, month, 1))} aria-label="Next year">
+              <button className="calendar-nav-btn" onClick={() => setViewMonth(new Date(year + 1, month, 1))} aria-label={t("nextYearAria", language)}>
                 <ChevronsRight size={15} />
               </button>
             </div>
           </div>
 
           <div className="calendar-popover-weekdays">
-            {WEEKDAY_LABELS.map((label) => (
+            {WEEKDAY_LABELS[language].map((label) => (
               <span key={label}>{label}</span>
             ))}
           </div>
@@ -1131,7 +910,7 @@ function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; on
               setOpen(false);
             }}
           >
-            Jump to today
+            {t("jumpToToday", language)}
           </button>
         </div>
       ) : null}
@@ -1139,9 +918,29 @@ function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; on
   );
 }
 
+function LanguageSwitcher() {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <div className="language-switcher" role="group" aria-label="Language">
+      {LANGUAGES.map((option) => (
+        <button
+          key={option.code}
+          className={`language-switcher-option${option.code === language ? " active" : ""}`}
+          onClick={() => setLanguage(option.code)}
+          aria-pressed={option.code === language}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const COORDS_KEY = "mondkalender.coords";
 
 function App() {
+  const { language } = useLanguage();
   const [selectedDate, setSelectedDate] = React.useState(() => new Date());
   const [now, setNow] = React.useState(() => new Date());
   const [deviceTimeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -1183,7 +982,7 @@ function App() {
   const bedtimeMoment = atHour(addDays(selectedDate, -1), 23);
   const morningMoment = atHour(selectedDate, 7);
   const tonightBedtimeMoment = atHour(selectedDate, 23);
-  const moonZodiac = getMoonZodiac(today.date);
+  const moonZodiac = getMoonZodiac(today.date, language);
   const week = Array.from({ length: 7 }, (_, index) => getMoonDay(atHour(addDays(selectedDate, index - 2), 12)));
 
   const dayKey = today.date.toDateString();
@@ -1220,12 +1019,17 @@ function App() {
   );
 
   const civilLunarDay = getCivilLunarDay(selectedDate);
-  const symbolDay = getSymbolDay(today.date, moonriseLadder);
-  const heroWisdom = getHeroWisdom(symbolDay.number, symbolDay.source.doToday, moonZodiac.sign);
-  const practiceWisdom = getPracticeWisdom(symbolDay.number, moonZodiac.sign.name);
+  const symbolDay = getSymbolDay(today.date, moonriseLadder, language);
+  const heroWisdom = getHeroWisdom(
+    symbolDay.number,
+    symbolDay.source.doToday,
+    { signIndex: moonZodiac.signIndex, bestFor: moonZodiac.sign.bestFor },
+    language
+  );
+  const practiceWisdom = getPracticeWisdom(symbolDay.number, moonZodiac.signIndex, language);
 
-  const wakeSymbolDayBedtime = getSymbolDay(bedtimeMoment, moonriseLadder);
-  const wakeSymbolDayMorning = getSymbolDay(morningMoment, moonriseLadder);
+  const wakeSymbolDayBedtime = getSymbolDay(bedtimeMoment, moonriseLadder, language);
+  const wakeSymbolDayMorning = getSymbolDay(morningMoment, moonriseLadder, language);
   // Only offer the toggle when we have real moonrise data: the civil-day fallback changes at
   // every local midnight regardless of the actual moon, which would make it fire every single
   // night and say nothing meaningful.
@@ -1235,10 +1039,10 @@ function App() {
 
   // Tonight's own bedtime lunar day (may already differ from today's displayed one) — used only
   // to check whether it's a day whose dream calls for preparing before sleep.
-  const tonightSymbolDay = getSymbolDay(tonightBedtimeMoment, moonriseLadder);
-  const dreamPrep = getDreamPrep(tonightSymbolDay.number);
+  const tonightSymbolDay = getSymbolDay(tonightBedtimeMoment, moonriseLadder, language);
+  const dreamPrep = getDreamPrep(tonightSymbolDay.number, language);
 
-  const weekSymbolDays = week.map((day) => getSymbolDay(day.date, moonriseLadder));
+  const weekSymbolDays = week.map((day) => getSymbolDay(day.date, moonriseLadder, language));
 
   const todayMoonrise = moonriseLadder ? findLadderEntry(moonriseLadder, today.date) : undefined;
   const todayMoonset =
@@ -1256,7 +1060,7 @@ function App() {
   return (
     <main className="app-shell">
       <section className="hero-panel">
-        <nav className="topbar" aria-label="Application">
+        <nav className="topbar" aria-label={t("appLabel", language)}>
           <div className="brand">
             <span className="brand-mark">
               <Moon size={18} strokeWidth={2.3} />
@@ -1265,12 +1069,13 @@ function App() {
           </div>
           <div className="top-actions">
             <div className="clock-row">
+              <LanguageSwitcher />
               <button
                 className="icon-button"
                 onClick={() =>
                   document.getElementById("support-cta")?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                aria-label="Account & more features"
+                aria-label={t("accountAria", language)}
               >
                 <User size={18} />
               </button>
@@ -1279,7 +1084,7 @@ function App() {
                 href="https://buymeacoffee.com/drliebhoff"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Buy me a coffee"
+                aria-label={t("buyMeCoffeeAria", language)}
               >
                 <Coffee size={18} />
               </a>
@@ -1288,11 +1093,11 @@ function App() {
                 aria-label={`Current time in ${timeZone}`}
                 title={
                   locationTimeZone && locationTimeZone !== deviceTimeZone
-                    ? `Using your location's time zone (device is set to ${deviceTimeZone})`
+                    ? t("locationTimeZoneTitle", language, { tz: deviceTimeZone })
                     : undefined
                 }
               >
-                <span>{formatClock(now, timeZone)}</span>
+                <span>{formatClock(now, timeZone, language)}</span>
                 <small className="live-clock-zone">
                   {timeZone}
                   {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
@@ -1318,37 +1123,37 @@ function App() {
               <button
                 className="icon-button"
                 onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-                aria-label="Previous day"
+                aria-label={t("previousDayAria", language)}
               >
                 <ChevronLeft size={19} />
               </button>
-              <p>{formatDate(today.date, timeZone)}</p>
+              <p>{formatDate(today.date, timeZone, language)}</p>
               <button
                 className="icon-button"
                 onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-                aria-label="Next day"
+                aria-label={t("nextDayAria", language)}
               >
                 <ChevronRight size={19} />
               </button>
             </div>
 
             <div className="tithi-line">
-              <span title="Lunar day number — civil count, resets at local midnight">
+              <span title={t("lunarDayCivilTitle", language)}>
                 {civilLunarDay.tithiName === "Purnima"
-                  ? "Full Moon"
+                  ? t("fullMoon", language)
                   : civilLunarDay.tithiName === "Amavasya"
-                  ? "New Moon"
-                  : `Lunar Day ${civilLunarDay.number}`}
+                  ? t("newMoon", language)
+                  : t("lunarDayLabel", language, { n: civilLunarDay.number })}
               </span>
               <span className="tithi-sep" aria-hidden="true">–</span>
-              <span title="Zodiac — Moon sign, 30° ecliptic longitude">Moon in {moonZodiac.sign.name}</span>
+              <span title={t("zodiacTitle", language)}>{t("moonInLabel", language, { inPhrase: moonZodiac.sign.inPhrase })}</span>
               <span className="tithi-sep" aria-hidden="true">–</span>
-              <span title="Vronsky Lunar Days symbol, moonrise to moonrise">{symbolDay.source.symbol}</span>
+              <span title={t("vronskySymbolTitle", language)}>{symbolDay.source.symbol}</span>
               <span className="tithi-sep" aria-hidden="true">–</span>
-              <span title="Tithi — precise Moon-Sun angle">
+              <span title={t("tithiPreciseTitle", language)}>
                 {today.tithiName === "Purnima" || today.tithiName === "Amavasya"
                   ? today.tithiName
-                  : `Tithi ${today.tithiNumber} · ${today.paksha}`}
+                  : t("tithiLabel", language, { n: today.tithiNumber, paksha: today.paksha })}
               </span>
             </div>
 
@@ -1356,18 +1161,18 @@ function App() {
               <>
                 <div className="rise-set-row">
                   <span>
-                    <ArrowUpRight size={14} /> Moonrise {todayMoonrise ? formatTimeOnly(todayMoonrise.start, timeZone) : "—"}
+                    <ArrowUpRight size={14} /> {t("moonrise", language)} {todayMoonrise ? formatTimeOnly(todayMoonrise.start, timeZone, language) : "—"}
                   </span>
                   <span>
-                    <ArrowDownRight size={14} /> Moonset {todayMoonset ? formatTimeOnly(todayMoonset.date, timeZone) : "—"}
+                    <ArrowDownRight size={14} /> {t("moonset", language)} {todayMoonset ? formatTimeOnly(todayMoonset.date, timeZone, language) : "—"}
                   </span>
                 </div>
                 <div className="rise-set-row sun-row">
                   <span>
-                    <Sunrise size={14} /> Sunrise {todaySunrise ? formatTimeOnly(todaySunrise.date, timeZone) : "—"}
+                    <Sunrise size={14} /> {t("sunrise", language)} {todaySunrise ? formatTimeOnly(todaySunrise.date, timeZone, language) : "—"}
                   </span>
                   <span>
-                    <Sunset size={14} /> Sunset {todaySunset ? formatTimeOnly(todaySunset.date, timeZone) : "—"}
+                    <Sunset size={14} /> {t("sunset", language)} {todaySunset ? formatTimeOnly(todaySunset.date, timeZone, language) : "—"}
                   </span>
                 </div>
               </>
@@ -1375,12 +1180,12 @@ function App() {
               <button className="location-prompt hero-location-prompt" onClick={handleEnableLocation} disabled={locationStatus === "pending"}>
                 <MapPin size={14} />
                 {locationStatus === "pending"
-                  ? "Locating…"
+                  ? t("locatingHero", language)
                   : locationStatus === "denied"
-                  ? "Location blocked — moon day symbol uses a calendar-day estimate"
+                  ? t("locationBlockedHero", language)
                   : locationStatus === "unsupported"
-                  ? "Location unavailable — moon day symbol uses a calendar-day estimate"
-                  : "Enable location for moonrise/moonset & exact moon-day symbol times"}
+                  ? t("locationUnsupportedHero", language)
+                  : t("enableLocationHero", language)}
               </button>
             )}
 
@@ -1412,27 +1217,27 @@ function App() {
         <article className="panel dream-panel">
           <div className="panel-heading">
             <Eye size={19} />
-            <h2>Dreams After Waking</h2>
+            <h2>{t("dreamsHeading", language)}</h2>
           </div>
           <div className="dream-context">
             <div className="dream-context-heading">
-              <span>Dream you woke with</span>
+              <span>{t("dreamWokeWith", language)}</span>
               {dreamSplitsOvernight ? (
                 <div className="dream-toggle">
                   <button
                     className="icon-button"
                     onClick={() => setDreamPart("early")}
                     disabled={dreamPart === "early"}
-                    aria-label="Earlier in the night, before the lunar day changed"
+                    aria-label={t("dreamEarlierAria", language)}
                   >
                     <ChevronLeft size={13} />
                   </button>
-                  <small>{dreamPart === "early" ? "earlier in the night" : "later, toward morning"}</small>
+                  <small>{t(dreamPart === "early" ? "dreamEarlierLabel" : "dreamLaterLabel", language)}</small>
                   <button
                     className="icon-button"
                     onClick={() => setDreamPart("late")}
                     disabled={dreamPart === "late"}
-                    aria-label="Later in the night, toward morning"
+                    aria-label={t("dreamLaterAria", language)}
                   >
                     <ChevronRight size={13} />
                   </button>
@@ -1440,11 +1245,11 @@ function App() {
               ) : null}
             </div>
             <strong>
-              {wakeSymbolDay.source.emoji} Day {wakeSymbolDay.number} · {wakeSymbolDay.source.symbol}
+              {wakeSymbolDay.source.emoji} {t("dayLabel", language, { n: wakeSymbolDay.number })} · {wakeSymbolDay.source.symbol}
             </strong>
             <span className="dream-window">
-              {formatPeriodMoment(wakeSymbolDay.start, timeZone)} – {formatPeriodMoment(wakeSymbolDay.end, timeZone)}
-              {wakeSymbolDay.approximate ? " (est.)" : null}
+              {formatPeriodMoment(wakeSymbolDay.start, timeZone, language)} – {formatPeriodMoment(wakeSymbolDay.end, timeZone, language)}
+              {wakeSymbolDay.approximate ? t("dreamEstimate", language) : null}
             </span>
           </div>
           <h3>{wakeSymbolDay.source.dreamFocus}</h3>
@@ -1457,21 +1262,21 @@ function App() {
         <article className="panel ritual-panel">
           <div className="panel-heading">
             <SunMedium size={19} />
-            <h2>Today's Practice</h2>
+            <h2>{t("todaysPracticeHeading", language)}</h2>
           </div>
           <p>{practiceWisdom}</p>
           {dreamPrep ? <p className="dream-prep-note">{dreamPrep}</p> : null}
           <blockquote>{symbolDay.source.tagline}</blockquote>
         </article>
 
-        <section className="week-strip" aria-label="Seven day moon outlook">
+        <section className="week-strip" aria-label={t("weekOutlookAria", language)}>
           {week.map((day, index) => (
             <button
               className={`day-chip${day.date.toDateString() === selectedDate.toDateString() ? " active" : ""}`}
               key={day.date.toISOString()}
               onClick={() => setSelectedDate(day.date)}
             >
-              <span>{new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(day.date)}</span>
+              <span>{new Intl.DateTimeFormat(DATE_LOCALE[language], { weekday: "short" }).format(day.date)}</span>
               <i style={moonIconStyle(day.phasePercent, day.phaseAngle)} />
               <strong>{weekSymbolDays[index].source.emoji}</strong>
               <small>{weekSymbolDays[index].number}</small>
@@ -1480,10 +1285,7 @@ function App() {
         </section>
 
         <section className="support-cta" id="support-cta">
-          <p>
-            Enjoying this app and want more — notifications, personalised birth-date guidance, and beyond? Send me an
-            email or consider buying me a coffee.
-          </p>
+          <p>{t("supportCtaText", language)}</p>
           <div className="support-cta-actions">
             <a className="support-email" href="mailto:moon@liebhoff.com">
               <Mail size={16} />
@@ -1497,7 +1299,7 @@ function App() {
             >
               <img
                 src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-                alt="Buy me a coffee"
+                alt={t("buyMeCoffeeAlt", language)}
                 height={36}
               />
             </a>
@@ -1516,4 +1318,8 @@ declare global {
 
 const rootElement = document.getElementById("root")!;
 window.mondkalenderRoot ??= createRoot(rootElement);
-window.mondkalenderRoot.render(<App />);
+window.mondkalenderRoot.render(
+  <LanguageProvider>
+    <App />
+  </LanguageProvider>
+);
