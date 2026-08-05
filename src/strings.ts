@@ -53,7 +53,6 @@ type StringKey =
   | "avoid"
   | "lunarDaySymbolHeading"
   | "dayLabel"
-  | "sourceLinkLabel"
   | "bodyNourishmentHeading"
   | "activeAreas"
   | "meditationLabel"
@@ -133,7 +132,6 @@ const strings: Record<StringKey, Record<Language, string>> = {
   avoid: { en: "Avoid", de: "Vermeiden" },
   lunarDaySymbolHeading: { en: "Lunar Day Symbol · {symbol}", de: "Mondtag-Symbol · {symbol}" },
   dayLabel: { en: "Day {n}", de: "Tag {n}" },
-  sourceLinkLabel: { en: "Source: Vronsky Lunar Days, day {n} — via OM Journal →", de: "Quelle: Vronsky-Mondtage, Tag {n} — via OM Journal →" },
   bodyNourishmentHeading: { en: "Body & Nourishment", de: "Körper & Ernährung" },
   activeAreas: { en: "Active areas", de: "Aktive Bereiche" },
   meditationLabel: { en: "Meditation", de: "Meditation" },

@@ -647,10 +647,6 @@ function SymbolPanel({
           ))}
         </div>
       </div>
-
-      <a href={source.sourceUrl} target="_blank" rel="noreferrer">
-        {t("sourceLinkLabel", language, { n: symbolDay.number })}
-      </a>
     </article>
   );
 }
