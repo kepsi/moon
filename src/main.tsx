@@ -7,6 +7,7 @@ import {
   BookOpen,
   Briefcase,
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -272,6 +273,13 @@ function atHour(date: Date, hour: number) {
   return next;
 }
 
+function withTimeOfDay(date: Date, minutesSinceMidnight: number) {
+  const next = new Date(date);
+  const clamped = Math.min(24 * 60 - 1, Math.max(0, Math.round(minutesSinceMidnight)));
+  next.setHours(Math.floor(clamped / 60), clamped % 60, 0, 0);
+  return next;
+}
+
 function isSameLocalDate(first: Date, second: Date) {
   return (
     first.getFullYear() === second.getFullYear() &&
@@ -285,17 +293,8 @@ function formatDate(date: Date, timeZone: string | undefined, language: Language
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
     timeZone
-  }).format(date);
-}
-
-function formatClock(date: Date, timeZone: string, language: Language) {
-  return new Intl.DateTimeFormat(DATE_LOCALE[language], {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    timeZone,
-    timeZoneName: "short"
   }).format(date);
 }
 
@@ -916,19 +915,60 @@ function CalendarButton({ selectedDate, onSelectDate }: { selectedDate: Date; on
 
 function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();
+  const [open, setOpen] = React.useState(false);
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handlePointer = (event: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  const current = LANGUAGES.find((option) => option.code === language) ?? LANGUAGES[0];
 
   return (
-    <div className="language-switcher" role="group" aria-label="Language">
-      {LANGUAGES.map((option) => (
-        <button
-          key={option.code}
-          className={`language-switcher-option${option.code === language ? " active" : ""}`}
-          onClick={() => setLanguage(option.code)}
-          aria-pressed={option.code === language}
-        >
-          {option.label}
-        </button>
-      ))}
+    <div className="language-switcher-wrap" ref={wrapRef}>
+      <button
+        className="icon-button language-switcher-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Language"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {current.label}
+        <ChevronDown size={13} />
+      </button>
+
+      {open ? (
+        <div className="language-switcher-popover" role="listbox">
+          {LANGUAGES.map((option) => (
+            <button
+              key={option.code}
+              role="option"
+              aria-selected={option.code === language}
+              className={`language-switcher-option${option.code === language ? " active" : ""}`}
+              onClick={() => {
+                setLanguage(option.code);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -939,6 +979,8 @@ function App() {
   const { language } = useLanguage();
   const [selectedDate, setSelectedDate] = React.useState(() => new Date());
   const [now, setNow] = React.useState(() => new Date());
+  const [manualTimeMinutes, setManualTimeMinutes] = React.useState<number | null>(null);
+  const timeTrackRef = React.useRef<HTMLDivElement>(null);
   const [deviceTimeZone] = React.useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [coords, setCoords] = React.useState<Coords | null>(() => {
     const saved = window.localStorage.getItem(COORDS_KEY);
@@ -971,7 +1013,44 @@ function App() {
     return () => window.clearInterval(clock);
   }, []);
 
-  const selectedMoment = isSameLocalDate(selectedDate, now) ? now : atHour(selectedDate, 12);
+  const timeMinutesFromClientX = (clientX: number) => {
+    const el = timeTrackRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const ratio = rect.width === 0 ? 0 : Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    return Math.min(24 * 60 - 1, Math.max(0, Math.round(ratio * 24 * 60)));
+  };
+
+  const handleTimeStripPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const minutes = timeMinutesFromClientX(event.clientX);
+    if (minutes !== null) setManualTimeMinutes(minutes);
+  };
+
+  const handleTimeStripPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    const minutes = timeMinutesFromClientX(event.clientX);
+    if (minutes !== null) setManualTimeMinutes(minutes);
+  };
+
+  const handleTimeStripKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 60 : 15;
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+      event.preventDefault();
+      setManualTimeMinutes(Math.max(0, Math.round(timeOfDayMinutes) - step));
+    } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setManualTimeMinutes(Math.min(24 * 60 - 1, Math.round(timeOfDayMinutes) + step));
+    }
+  };
+
+  // The strip's glowing dot follows the live clock (updating every second) until the reader
+  // drags it, at which point that chosen time of day sticks — including across day navigation —
+  // until they tap "Now" again.
+  const isSelectedToday = isSameLocalDate(selectedDate, now);
+  const liveMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  const timeOfDayMinutes = manualTimeMinutes ?? (isSelectedToday ? liveMinutes : 12 * 60);
+  const selectedMoment = withTimeOfDay(selectedDate, timeOfDayMinutes);
   const today = getMoonDay(selectedMoment);
   // A lunar day can change mid-sleep, so the dream you woke with may belong to either the
   // lunar day active at bedtime or the one active toward morning. Offer both when they differ.
@@ -1063,44 +1142,26 @@ function App() {
             </span>
             <span className="brand-name">Mondkalender</span>
           </div>
-          <div className="top-actions">
-            <div className="clock-row">
-              <LanguageSwitcher />
-              <button
-                className="icon-button"
-                onClick={() =>
-                  document.getElementById("support-cta")?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                aria-label={t("accountAria", language)}
-              >
-                <User size={18} />
-              </button>
-              <a
-                className="icon-button"
-                href="https://buymeacoffee.com/drliebhoff"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={t("buyMeCoffeeAria", language)}
-              >
-                <Coffee size={18} />
-              </a>
-              <div
-                className="live-clock"
-                aria-label={`Current time in ${timeZone}`}
-                title={
-                  locationTimeZone && locationTimeZone !== deviceTimeZone
-                    ? t("locationTimeZoneTitle", language, { tz: deviceTimeZone })
-                    : undefined
-                }
-              >
-                <span>{formatClock(now, timeZone, language)}</span>
-                <small className="live-clock-zone">
-                  {timeZone}
-                  {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
-                </small>
-              </div>
-            </div>
-            <CalendarButton selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+          <div className="topbar-controls">
+            <button
+              className="icon-button"
+              onClick={() =>
+                document.getElementById("support-cta")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              aria-label={t("accountAria", language)}
+            >
+              <User size={18} />
+            </button>
+            <a
+              className="icon-button"
+              href="https://buymeacoffee.com/drliebhoff"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t("buyMeCoffeeAria", language)}
+            >
+              <Coffee size={18} />
+            </a>
+            <LanguageSwitcher />
           </div>
         </nav>
 
@@ -1131,6 +1192,48 @@ function App() {
               >
                 <ChevronRight size={19} />
               </button>
+              <CalendarButton selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            </div>
+
+            <div className="time-strip">
+              <div
+                className="time-strip-track"
+                ref={timeTrackRef}
+                role="slider"
+                tabIndex={0}
+                aria-label={t("timeOfDaySliderAria", language, { tz: timeZone })}
+                aria-valuemin={0}
+                aria-valuemax={24 * 60 - 1}
+                aria-valuenow={Math.round(timeOfDayMinutes)}
+                aria-valuetext={formatTimeOnly(selectedMoment, timeZone, language)}
+                onPointerDown={handleTimeStripPointerDown}
+                onPointerMove={handleTimeStripPointerMove}
+                onKeyDown={handleTimeStripKeyDown}
+              >
+                <span className="time-strip-line" />
+                <span className="time-strip-handle" style={{ left: `${(timeOfDayMinutes / (24 * 60)) * 100}%` }}>
+                  <span className="time-strip-glow" />
+                </span>
+              </div>
+              <div className="time-strip-meta">
+                <span className="time-strip-time">{formatTimeOnly(selectedMoment, timeZone, language)}</span>
+                {manualTimeMinutes !== null ? (
+                  <button type="button" className="time-strip-now" onClick={() => setManualTimeMinutes(null)}>
+                    {t("nowLabel", language)}
+                  </button>
+                ) : null}
+                <span
+                  className="time-strip-zone"
+                  title={
+                    locationTimeZone && locationTimeZone !== deviceTimeZone
+                      ? t("locationTimeZoneTitle", language, { tz: deviceTimeZone })
+                      : undefined
+                  }
+                >
+                  {timeZone}
+                  {locationTimeZone && locationTimeZone !== deviceTimeZone ? <MapPin size={10} /> : null}
+                </span>
+              </div>
             </div>
 
             <div className="tithi-line">

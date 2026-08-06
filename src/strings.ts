@@ -16,6 +16,8 @@ type StringKey =
   | "locationTimeZoneTitle"
   | "previousDayAria"
   | "nextDayAria"
+  | "timeOfDaySliderAria"
+  | "nowLabel"
   | "lunarDayCivilTitle"
   | "fullMoon"
   | "newMoon"
@@ -83,6 +85,8 @@ const strings: Record<StringKey, Record<Language, string>> = {
   },
   previousDayAria: { en: "Previous day", de: "Vorheriger Tag" },
   nextDayAria: { en: "Next day", de: "Nächster Tag" },
+  timeOfDaySliderAria: { en: "Time of day ({tz})", de: "Tageszeit ({tz})" },
+  nowLabel: { en: "Now", de: "Jetzt" },
   lunarDayCivilTitle: {
     en: "Lunar day number — civil count, resets at local midnight",
     de: "Mondtagnummer — Kalenderzählung, wechselt um Mitternacht"
