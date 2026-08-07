@@ -119,7 +119,7 @@ const strings: Record<StringKey, Record<Language, string>> = {
   locationBlockedSymbol: { en: "Location blocked — showing calendar-day estimate", de: "Standort blockiert — zeige Kalendertag-Schätzung" },
   locationUnsupportedSymbol: { en: "Location unavailable — showing calendar-day estimate", de: "Standort nicht verfügbar — zeige Kalendertag-Schätzung" },
   enableLocationSymbol: { en: "Enable location for exact moonrise-based times", de: "Standort aktivieren für exakte, mondaufgangsbasierte Zeiten" },
-  dreamsHeading: { en: "Dreams After Waking", de: "Träume nach dem Aufwachen" },
+  dreamsHeading: { en: "Dreams Last Night Waking", de: "Träume letzter Nacht" },
   dreamWokeWith: { en: "Dream you woke with", de: "Traum, mit dem du aufgewacht bist" },
   dreamEarlierAria: { en: "Earlier in the night, before the lunar day changed", de: "Früher in der Nacht, bevor der Mondtag wechselte" },
   dreamLaterAria: { en: "Later in the night, toward morning", de: "Später in der Nacht, Richtung Morgen" },
